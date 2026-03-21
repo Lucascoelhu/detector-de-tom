@@ -400,7 +400,7 @@ body {
 .note-hero.active { border-color:var(--accent); }
 .note-hero.active::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%, rgba(108,99,255,0.08) 0%, transparent 65%); pointer-events:none; }
 
-.note-name { font-family:'Syne',sans-serif; font-size:clamp(3.5rem,20vw,5.5rem); font-weight:800; letter-spacing:-0.04em; line-height:1; text-align:center; color:var(--accent); transition:color 0.4s; min-height:1em; }
+.note-name { font-family:'Syne',sans-serif; font-size:clamp(2.6rem,14vw,3.8rem); font-weight:800; letter-spacing:-0.04em; line-height:1; text-align:center; color:var(--accent); transition:color 0.4s; min-height:1em; }
 .note-name.dim { color:var(--border2); }
 
 .note-meta { text-align:center; font-size:0.74rem; color:var(--sub); margin-top:4px; min-height:1.2em; }
@@ -454,7 +454,33 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 .ghost-btn { display:block; margin:0 auto 6px; background:transparent; border:1px solid var(--border); border-radius:50px; padding:6px 18px; color:var(--muted); font-family:'Inter',sans-serif; font-size:0.65rem; cursor:pointer; transition:all 0.2s; }
 .ghost-btn:hover { border-color:var(--accent2); color:var(--accent2); }
 
-/* ── CAMPO HARMÔNICO ────────────────────────────────────────────────────────── */
+/* ── SUGESTÃO HARMÔNICA (detector tab) ─────────────────────────────────────── */
+.harmonic-suggest-card {
+  width:100%; background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r); padding:10px 12px; margin-bottom:8px;
+}
+.hs-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.hs-title  { font-size:0.58rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+.hs-key    { font-family:'Syne',sans-serif; font-size:0.78rem; font-weight:800; color:var(--accent); }
+.hs-chords { display:flex; gap:5px; flex-wrap:wrap; }
+.hs-chord  {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:7px; padding:5px 9px;
+  font-family:'Syne',sans-serif; font-size:0.75rem; font-weight:700;
+  color:var(--sub); display:flex; flex-direction:column; align-items:center; gap:1px;
+  min-width:36px; text-align:center;
+}
+.hs-chord-name { color:var(--text); font-size:0.82rem; }
+.hs-chord-deg  { font-size:0.5rem; color:var(--muted); letter-spacing:0.06em; }
+.hs-chord.tonic    { border-color:var(--accent); background:rgba(108,99,255,0.12); }
+.hs-chord.tonic .hs-chord-name { color:var(--accent); }
+.hs-chord.dominant { border-color:var(--gold); }
+.hs-chord.dominant .hs-chord-name { color:var(--gold); }
+.hs-empty  { font-size:0.68rem; color:var(--muted); font-style:italic; }
+.hs-lock   { font-size:0.65rem; color:var(--muted); display:flex; align-items:center; gap:5px; }
+.hs-lock-btn { font-size:0.6rem; padding:3px 8px; border:none; border-radius:20px; cursor:pointer; background:var(--accent); color:#fff; font-family:'Inter',sans-serif; font-weight:600; }
+
+
 .harmonic-card { width:100%; background:var(--card); border:1px solid var(--border); border-radius:18px; padding:16px; margin-bottom:8px; position:relative; overflow:hidden; }
 
 .chord-selector { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:14px; }
@@ -622,6 +648,7 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
       <div class="pitch-bar"><div class="pitch-fill" id="confFill"></div></div>
     </div>
 
+    <!-- FORMA DE ONDA — subiu para cá -->
     <div class="wave-card">
       <div class="card-label">Forma de onda</div>
       <canvas id="waveCanvas" width="660" height="32"></canvas>
@@ -637,6 +664,17 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
         <div class="info-label">Relativo</div>
         <div class="info-value" id="keyMinor">—</div>
         <div class="info-sub"  id="keyMinorSub">—</div>
+      </div>
+    </div>
+
+    <!-- SUGESTÃO DO CAMPO HARMÔNICO — no lugar da forma de onda -->
+    <div class="harmonic-suggest-card">
+      <div class="hs-header">
+        <span class="hs-title">Acordes do tom</span>
+        <span class="hs-key" id="hsSuggestKey">—</span>
+      </div>
+      <div class="hs-chords" id="hsSuggestChords">
+        <span class="hs-empty">cante para ver sugestões</span>
       </div>
     </div>
 
@@ -842,13 +880,49 @@ function updateKeyDisplay(){
   const res=detectKey(noteHistory);
   const km=document.getElementById('keyMajor'),kms=document.getElementById('keyMajorSub');
   const kn=document.getElementById('keyMinor'),kns=document.getElementById('keyMinorSub');
-  if(!res){km.textContent='—';kms.textContent='cante mais notas';kn.textContent='—';kns.textContent='—';return;}
+  if(!res){
+    km.textContent='—';kms.textContent='cante mais notas';kn.textContent='—';kns.textContent='—';
+    updateHarmonicSuggest(null);
+    return;
+  }
   const r=res.root,p=Math.min(99,Math.round(res.score*100/(res.scale.includes('Pent')?(5/7):1)));
   km.textContent=`${NOTE_NAMES[r]} ${res.scale}`;kms.textContent=`${NOTE_NAMES_PT[r]} · ${p}% fit`;
   if(res.scale==='Maior'){const rl=(r+9)%12;kn.textContent=`${NOTE_NAMES[rl]}m`;kns.textContent=`${NOTE_NAMES_PT[rl]} menor`;}
   else if(res.scale==='Menor'){const rl=(r+3)%12;kn.textContent=NOTE_NAMES[rl];kns.textContent=`${NOTE_NAMES_PT[rl]} maior`;}
   else if(res.scale==='Pent. Maior'){const rl=(r+9)%12;kn.textContent=`${NOTE_NAMES[rl]} P.m`;kns.textContent='pent. menor rel.';}
   else{const rl=(r+3)%12;kn.textContent=`${NOTE_NAMES[rl]} P.M`;kns.textContent='pent. maior rel.';}
+  updateHarmonicSuggest(res);
+}
+
+// Sugestão dos acordes do campo harmônico em tempo real
+const MAJOR_Q_S=['Maior','Menor','Menor','Maior','Maior','Menor','Dim'];
+const MINOR_Q_S=['Menor','Dim','Maior','Menor','Menor','Maior','Maior'];
+const DEG_S    =['I','II','III','IV','V','VI','VII'];
+
+function updateHarmonicSuggest(res) {
+  const keyEl    = document.getElementById('hsSuggestKey');
+  const chordsEl = document.getElementById('hsSuggestChords');
+  if (!res) {
+    keyEl.textContent = '—';
+    chordsEl.innerHTML = '<span class="hs-empty">cante para ver sugestões</span>';
+    return;
+  }
+  const r = res.root;
+  const isMajor = res.scale === 'Maior' || res.scale === 'Pent. Maior';
+  const intervals = isMajor ? [0,2,4,5,7,9,11] : [0,2,3,5,7,8,10];
+  const qualities = isMajor ? MAJOR_Q_S : MINOR_Q_S;
+  keyEl.textContent = `${NOTE_NAMES[r]} ${res.scale}`;
+  chordsEl.innerHTML = '';
+  intervals.forEach((iv, i) => {
+    const ri = (r + iv) % 12;
+    const q  = qualities[i];
+    const cn = NOTE_NAMES[ri] + (q==='Menor'?'m': q==='Dim'?'°':'');
+    const isT = i === 0, isD = i === 4;
+    const chip = document.createElement('div');
+    chip.className = 'hs-chord' + (isT?' tonic': isD?' dominant':'');
+    chip.innerHTML = `<span class="hs-chord-name">${cn}</span><span class="hs-chord-deg">${DEG_S[i]}</span>`;
+    chordsEl.appendChild(chip);
+  });
 }
 
 function addNoteToHistory(name,idx){

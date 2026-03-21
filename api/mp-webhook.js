@@ -11,7 +11,7 @@ if (!admin.apps.length) {
   });
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.sendStatus(200);
   if (req.body?.type !== 'payment') return;
 

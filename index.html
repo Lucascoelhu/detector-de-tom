@@ -9,7 +9,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCPTM3tzXX8jqEoDr3NUAJ4TkVQhJXskyI",
@@ -24,13 +24,13 @@
   const auth = getAuth(app);
   const db   = getFirestore(app);
 
-  window._vp = { auth, db, user: null, isPro: false, detectionCount: 0, FREE_LIMIT: 200 };
+  window._vp = { auth, db, user: null, isPro: false, detectionCount: 0, FREE_LIMIT: 600 };
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       window._vp.user = user;
       await loadUserData(user.uid);
-      showApp();
+      showWelcome(user.email);
     } else {
       window._vp.user = null;
       window._vp.isPro = false;
@@ -47,28 +47,43 @@
     } else {
       window._vp.isPro = snap.data().plan === "pro";
     }
+  }
+
+  function showWelcome(email) {
+    const name = email.split('@')[0];
+    const cap  = name.charAt(0).toUpperCase() + name.slice(1);
+    document.getElementById('welcomeName').textContent = cap;
+    document.getElementById('welcomeScreen').style.display = 'flex';
+    document.getElementById('authScreen').style.display    = 'none';
+    document.getElementById('appScreen').style.display     = 'none';
+    setTimeout(() => {
+      document.getElementById('welcomeScreen').style.display = 'none';
+      showApp();
+    }, 2200);
+  }
+
+  function showAuth() {
+    document.getElementById('authScreen').style.display    = 'flex';
+    document.getElementById('appScreen').style.display     = 'none';
+    document.getElementById('welcomeScreen').style.display = 'none';
+  }
+
+  function showApp() {
+    document.getElementById('authScreen').style.display    = 'none';
+    document.getElementById('appScreen').style.display     = 'flex';
+    document.getElementById('welcomeScreen').style.display = 'none';
     updatePlanBadge();
+    updateFreeBar();
   }
 
   function updatePlanBadge() {
     const b = document.getElementById('planBadge');
     if (!b) return;
-    b.textContent  = window._vp.isPro ? 'PRO' : 'FREE';
-    b.className    = 'plan-badge ' + (window._vp.isPro ? 'pro' : 'free');
+    b.textContent = window._vp.isPro ? 'PRO' : 'FREE';
+    b.className   = 'plan-badge ' + (window._vp.isPro ? 'pro' : 'free');
     if (window._vp.isPro) document.getElementById('freeBarWrap').style.display = 'none';
   }
   window.updatePlanBadge = updatePlanBadge;
-
-  function showAuth() {
-    document.getElementById('authScreen').style.display = 'flex';
-    document.getElementById('appScreen').style.display  = 'none';
-  }
-  function showApp() {
-    document.getElementById('authScreen').style.display = 'none';
-    document.getElementById('appScreen').style.display  = 'flex';
-    updatePlanBadge();
-    updateFreeBar();
-  }
 
   window.doRegister = async () => {
     const email = document.getElementById('authEmail').value.trim();
@@ -124,8 +139,9 @@
     if (window._vp.isPro) { document.getElementById('freeBarWrap').style.display = 'none'; return; }
     const used = window._vp.detectionCount, max = window._vp.FREE_LIMIT;
     const pct  = Math.min(100, (used / max) * 100);
-    document.getElementById('freeBarFill').style.width = pct + '%';
+    document.getElementById('freeBarFill').style.width  = pct + '%';
     document.getElementById('freeBarLabel').textContent = `${used} / ${max} detecções gratuitas`;
+    document.getElementById('freeBarPct').textContent   = `${Math.round(pct)}% usado`;
     if (pct >= 80) document.getElementById('freeBarFill').style.background = '#f43f5e';
   }
 
@@ -153,8 +169,8 @@
       if (data.qr_code) {
         document.getElementById('pixOffer').style.display = 'none';
         document.getElementById('pixQR').style.display    = 'block';
-        document.getElementById('pixQRImg').src  = `data:image/png;base64,${data.qr_code_base64}`;
-        document.getElementById('pixCode').textContent = data.qr_code;
+        document.getElementById('pixQRImg').src           = `data:image/png;base64,${data.qr_code_base64}`;
+        document.getElementById('pixCode').textContent    = data.qr_code;
         startPolling(data.payment_id);
       } else { alert('Erro ao gerar Pix. Tente novamente.'); }
     } catch(e) { alert('Erro de conexão.'); }
@@ -177,6 +193,7 @@
           updatePlanBadge();
           hidePaywall();
           document.getElementById('freeBarWrap').style.display = 'none';
+          renderHarmonicField();
           showToast('Pagamento confirmado! Bem-vindo ao Pro!');
         } else {
           document.getElementById('pixStatus').textContent =
@@ -197,18 +214,18 @@
 
 <style>
 :root {
-  --bg:      #0e0e14;
-  --surface: #16161f;
-  --card:    #1c1c28;
-  --border:  #2a2a3a;
-  --border2: #363650;
+  --bg:      #0a0a12;
+  --surface: #13131e;
+  --card:    #1a1a28;
+  --border:  #262638;
+  --border2: #343450;
   --accent:  #6c63ff;
   --accent2: #f43f5e;
   --accent3: #10b981;
   --gold:    #f59e0b;
-  --text:    #f0f0ff;
-  --sub:     #a0a0c0;
-  --muted:   #5a5a78;
+  --text:    #eeeeff;
+  --sub:     #9898b8;
+  --muted:   #555570;
   --radius:  14px;
 }
 
@@ -222,384 +239,240 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0 14px 32px;
+  padding: 0 14px 40px;
 }
+
+/* ─── WELCOME ──────────────────────────────────────────────────────────────── */
+#welcomeScreen {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: var(--bg); flex-direction: column;
+  align-items: center; justify-content: center;
+  animation: fadeOut 0.5s ease 1.7s forwards;
+}
+@keyframes fadeOut { to { opacity:0; pointer-events:none; } }
+
+.welcome-logo {
+  width: 80px; height: 80px; border-radius: 22px; object-fit: contain;
+  margin-bottom: 22px;
+  animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes popIn { from{transform:scale(0.4);opacity:0} to{transform:scale(1);opacity:1} }
+
+.welcome-hi {
+  font-size: 0.7rem; color: var(--muted);
+  letter-spacing: 0.16em; text-transform: uppercase;
+  margin-bottom: 8px; font-weight: 500;
+  animation: slideUp 0.4s ease 0.15s both;
+}
+.welcome-name {
+  font-family: 'Syne', sans-serif; font-weight: 800;
+  font-size: 2.2rem; color: var(--text); letter-spacing: -0.03em;
+  animation: slideUp 0.4s ease 0.25s both;
+}
+.welcome-sub {
+  font-size: 0.75rem; color: var(--muted); margin-top: 8px;
+  animation: slideUp 0.4s ease 0.35s both;
+}
+@keyframes slideUp { from{transform:translateY(14px);opacity:0} to{transform:translateY(0);opacity:1} }
 
 /* ─── AUTH ─────────────────────────────────────────────────────────────────── */
 #authScreen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  width: 100%;
-  max-width: 360px;
-  z-index: 1;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 100vh;
+  width: 100%; max-width: 360px; z-index: 1;
 }
 
-.auth-logo {
-  font-family: 'Syne', sans-serif;
-  font-weight: 800;
-  font-size: 1.8rem;
-  letter-spacing: -0.03em;
-  color: var(--text);
-  margin-bottom: 4px;
-}
-.auth-logo span { color: var(--accent); }
+.auth-logo-wrap { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+.auth-logo-img  { width:46px; height:46px; border-radius:14px; object-fit:contain; }
+.auth-logo-text { font-family:'Syne',sans-serif; font-weight:800; font-size:1.4rem; letter-spacing:-0.03em; color:var(--text); }
 
-.auth-tagline {
-  font-size: 0.72rem;
-  color: var(--muted);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin-bottom: 32px;
-}
+.auth-tagline { font-size:0.68rem; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:28px; }
 
-.auth-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 28px 24px;
-  width: 100%;
-}
+.auth-card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:26px 22px; width:100%; }
 
-.auth-tabs {
-  display: flex;
-  background: var(--surface);
-  border-radius: 10px;
-  padding: 3px;
-  margin-bottom: 22px;
-  gap: 3px;
-}
-.auth-tab {
-  flex:1; padding:8px; border:none; border-radius:8px;
-  font-family:'Inter',sans-serif; font-size:0.78rem; font-weight:600;
-  cursor:pointer; background:transparent; color:var(--muted); transition:all 0.2s;
-}
+.auth-tabs { display:flex; background:var(--surface); border-radius:10px; padding:3px; margin-bottom:20px; gap:3px; }
+.auth-tab { flex:1; padding:8px; border:none; border-radius:8px; font-family:'Inter',sans-serif; font-size:0.78rem; font-weight:600; cursor:pointer; background:transparent; color:var(--muted); transition:all 0.2s; }
 .auth-tab.active { background:var(--card); color:var(--accent); }
 
 .auth-field { margin-bottom:14px; }
-.auth-field label {
-  display:block; font-size:0.68rem; color:var(--muted);
-  letter-spacing:0.06em; text-transform:uppercase; margin-bottom:6px; font-weight:500;
-}
-.auth-field input {
-  width:100%; padding:12px 14px;
-  border:1px solid var(--border); border-radius:10px;
-  font-family:'Inter',sans-serif; font-size:0.88rem;
-  color:var(--text); background:var(--surface); outline:none;
-  transition:border-color 0.2s;
-}
+.auth-field label { display:block; font-size:0.68rem; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:6px; font-weight:500; }
+.auth-field input { width:100%; padding:12px 14px; border:1px solid var(--border); border-radius:10px; font-family:'Inter',sans-serif; font-size:0.88rem; color:var(--text); background:var(--surface); outline:none; transition:border-color 0.2s; }
 .auth-field input:focus { border-color:var(--accent); }
 .auth-field input::placeholder { color:var(--muted); }
 
-.auth-error {
-  font-size:0.72rem; color:var(--accent2);
-  min-height:1.2em; margin-bottom:10px; text-align:center;
-}
+.auth-error { font-size:0.72rem; color:var(--accent2); min-height:1.2em; margin-bottom:10px; text-align:center; }
 
-.btn-primary {
-  width:100%; padding:13px; border:none; border-radius:50px;
-  font-family:'Inter',sans-serif; font-size:0.85rem; font-weight:600;
-  cursor:pointer; background:var(--accent); color:#fff;
-  transition:opacity 0.2s, transform 0.15s;
-}
+.btn-primary { width:100%; padding:13px; border:none; border-radius:50px; font-family:'Inter',sans-serif; font-size:0.85rem; font-weight:600; cursor:pointer; background:var(--accent); color:#fff; transition:opacity 0.2s, transform 0.15s; }
 .btn-primary:hover { opacity:0.88; transform:translateY(-1px); }
 .btn-primary:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
 .btn-primary.secondary { background:var(--surface); color:var(--sub); border:1px solid var(--border); }
 
-.auth-divider {
-  display:flex; align-items:center; gap:10px;
-  margin:14px 0; color:var(--muted); font-size:0.68rem;
-}
+.auth-divider { display:flex; align-items:center; gap:10px; margin:14px 0; color:var(--muted); font-size:0.68rem; }
 .auth-divider::before,.auth-divider::after { content:''; flex:1; height:1px; background:var(--border); }
 
 /* ─── APP ──────────────────────────────────────────────────────────────────── */
-#appScreen {
-  display:none; flex-direction:column; align-items:center;
-  width:100%; max-width:400px; z-index:1;
-}
+#appScreen { display:none; flex-direction:column; align-items:center; width:100%; max-width:400px; z-index:1; }
 
-/* TOPBAR */
-.topbar {
-  display:flex; align-items:center; justify-content:space-between;
-  width:100%; padding:16px 0 10px;
-}
-.topbar-logo {
-  font-family:'Syne',sans-serif; font-weight:800;
-  font-size:1.05rem; letter-spacing:-0.02em; color:var(--text);
-}
-.topbar-logo span { color:var(--accent); }
+.topbar { display:flex; align-items:center; justify-content:space-between; width:100%; padding:14px 0 10px; }
+.topbar-brand { display:flex; align-items:center; gap:10px; }
+.topbar-logo-img { width:34px; height:34px; border-radius:10px; object-fit:contain; }
+.topbar-logo-text { font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; letter-spacing:-0.02em; color:var(--text); }
 .topbar-right { display:flex; align-items:center; gap:8px; }
 
-.plan-badge {
-  font-size:0.6rem; font-weight:700; padding:3px 9px;
-  border-radius:20px; letter-spacing:0.1em; font-family:'Inter',sans-serif;
-}
-.plan-badge.free { background:rgba(255,255,255,0.05); color:var(--muted); border:1px solid var(--border); }
+.plan-badge { font-size:0.6rem; font-weight:700; padding:3px 9px; border-radius:20px; letter-spacing:0.1em; font-family:'Inter',sans-serif; }
+.plan-badge.free { background:rgba(255,255,255,0.04); color:var(--muted); border:1px solid var(--border); }
 .plan-badge.pro  { background:var(--accent); color:#fff; }
 
-.btn-icon {
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:8px; padding:5px 11px; font-size:0.68rem;
-  color:var(--muted); cursor:pointer; font-family:'Inter',sans-serif;
-  transition:border-color 0.2s, color 0.2s;
-}
+.btn-icon { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:5px 11px; font-size:0.68rem; color:var(--muted); cursor:pointer; font-family:'Inter',sans-serif; transition:border-color 0.2s, color 0.2s; }
 .btn-icon:hover { border-color:var(--accent2); color:var(--accent2); }
 
 /* FREE BAR */
-#freeBarWrap {
-  width:100%; background:var(--card); border:1px solid var(--border);
-  border-radius:12px; padding:10px 14px; margin-bottom:10px;
-}
+#freeBarWrap { width:100%; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:11px 14px; margin-bottom:10px; }
 .free-bar-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:7px; }
-#freeBarLabel { font-size:0.65rem; color:var(--muted); font-weight:500; }
-.btn-upgrade-small {
-  font-size:0.6rem; font-weight:700; padding:4px 10px; border:none;
-  border-radius:20px; cursor:pointer; background:var(--accent); color:#fff;
-}
-.free-bar-track { height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
-#freeBarFill { height:100%; background:var(--accent); border-radius:2px; width:0%; transition:width 0.4s, background 0.4s; }
+#freeBarLabel { font-size:0.68rem; color:var(--sub); font-weight:500; }
+.btn-upgrade-small { font-size:0.6rem; font-weight:700; padding:4px 11px; border:none; border-radius:20px; cursor:pointer; background:var(--accent); color:#fff; }
+.free-bar-track { height:5px; background:var(--border); border-radius:3px; overflow:hidden; }
+#freeBarFill { height:100%; background:var(--accent); border-radius:3px; width:0%; transition:width 0.4s, background 0.4s; }
+.free-bar-footer { display:flex; justify-content:space-between; font-size:0.6rem; color:var(--muted); margin-top:5px; }
 
-/* ─── NOTE DISPLAY (hero) ──────────────────────────────────────────────────── */
-.note-hero {
-  width:100%;
-  background: var(--card);
-  border:1px solid var(--border);
-  border-radius:22px;
-  padding:24px 20px 18px;
-  margin-bottom:10px;
-  position:relative;
-  overflow:hidden;
-  transition:border-color 0.3s;
-}
+/* TABS NAV */
+.tabs-nav { display:flex; width:100%; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:4px; gap:3px; margin-bottom:10px; }
+.tab-btn { flex:1; padding:9px 6px; border:none; border-radius:10px; font-family:'Inter',sans-serif; font-size:0.72rem; font-weight:600; cursor:pointer; background:transparent; color:var(--muted); transition:all 0.2s; }
+.tab-btn.active { background:var(--surface); color:var(--accent); }
+
+.tab-panel { display:none; width:100%; }
+.tab-panel.active { display:flex; flex-direction:column; align-items:center; width:100%; }
+
+/* NOTE DISPLAY */
+.note-hero { width:100%; background:var(--card); border:1px solid var(--border); border-radius:22px; padding:22px 20px 16px; margin-bottom:10px; position:relative; overflow:hidden; transition:border-color 0.3s; }
 .note-hero.active { border-color:var(--accent); }
-.note-hero.active::before {
-  content:'';
-  position:absolute; inset:0;
-  background:radial-gradient(ellipse at 50% 0%, rgba(108,99,255,0.08) 0%, transparent 65%);
-  pointer-events:none;
-}
+.note-hero.active::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%, rgba(108,99,255,0.08) 0%, transparent 65%); pointer-events:none; }
 
-/* Note name — always visible, fades to dim when silent */
-.note-name {
-  font-family:'Syne',sans-serif;
-  font-size: clamp(4rem, 22vw, 6rem);
-  font-weight:800;
-  letter-spacing:-0.04em;
-  line-height:1;
-  text-align:center;
-  color:var(--accent);
-  transition: color 0.4s, opacity 0.4s;
-  min-height:1em;
-}
+.note-name { font-family:'Syne',sans-serif; font-size:clamp(4rem,22vw,6rem); font-weight:800; letter-spacing:-0.04em; line-height:1; text-align:center; color:var(--accent); transition:color 0.4s; min-height:1em; }
 .note-name.dim { color:var(--border2); }
 
-.note-meta {
-  text-align:center;
-  font-size:0.78rem;
-  color:var(--sub);
-  margin-top:6px;
-  min-height:1.2em;
-  transition:opacity 0.3s;
-}
+.note-meta { text-align:center; font-size:0.78rem; color:var(--sub); margin-top:6px; min-height:1.2em; }
 .note-meta.dim { opacity:0.3; }
 .note-meta strong { color:var(--accent); font-weight:600; }
 
-/* CENTS METER */
-.cents-wrap { margin:14px auto 0; width:100%; max-width:260px; }
-.cents-labels {
-  display:flex; justify-content:space-between;
-  font-size:0.6rem; color:var(--muted); margin-bottom:5px; letter-spacing:0.06em;
-}
-.cents-track {
-  height:6px; background:var(--border); border-radius:3px;
-  position:relative; overflow:visible;
-}
-.cents-track::before {
-  content:''; position:absolute; left:50%; top:-4px; bottom:-4px;
-  width:2px; background:var(--border2); transform:translateX(-50%); border-radius:1px;
-}
-.cents-ball {
-  position:absolute; top:50%; width:14px; height:14px;
-  border-radius:50%; left:50%;
-  transform:translate(-50%,-50%);
-  transition:left 0.12s, background 0.2s;
-  background:var(--accent);
-}
+.cents-wrap { margin:12px auto 0; width:100%; max-width:260px; }
+.cents-labels { display:flex; justify-content:space-between; font-size:0.6rem; color:var(--muted); margin-bottom:5px; }
+.cents-track { height:6px; background:var(--border); border-radius:3px; position:relative; overflow:visible; }
+.cents-track::before { content:''; position:absolute; left:50%; top:-4px; bottom:-4px; width:2px; background:var(--border2); transform:translateX(-50%); border-radius:1px; }
+.cents-ball { position:absolute; top:50%; width:14px; height:14px; border-radius:50%; left:50%; transform:translate(-50%,-50%); transition:left 0.12s, background 0.2s; background:var(--accent); }
 .cents-ball.in-tune { background:var(--accent3); box-shadow:0 0 10px rgba(16,185,129,0.5); }
 .cents-ball.sharp   { background:var(--accent2); }
 .cents-ball.flat    { background:var(--gold); }
 .cents-ball.dim     { background:var(--border2); box-shadow:none; }
 
-.cents-status {
-  text-align:center; font-size:0.68rem; margin-top:6px;
-  color:var(--muted); min-height:1em; font-weight:500;
-  transition:opacity 0.3s;
-}
+.cents-status { text-align:center; font-size:0.68rem; margin-top:6px; color:var(--muted); min-height:1em; font-weight:500; }
 .cents-status.dim { opacity:0.3; }
 
-/* PITCH BAR */
-.pitch-bar { height:2px; background:var(--border); border-radius:1px; margin-top:12px; overflow:hidden; }
+.pitch-bar { height:2px; background:var(--border); border-radius:1px; margin-top:10px; overflow:hidden; }
 .pitch-fill { height:100%; border-radius:1px; width:0%; transition:width 0.1s; background:linear-gradient(90deg,var(--accent),var(--accent3)); }
 
-/* ─── WAVEFORM ──────────────────────────────────────────────────────────────── */
-.wave-card {
-  width:100%; background:var(--card); border:1px solid var(--border);
-  border-radius:var(--radius); padding:12px 14px; margin-bottom:10px;
-}
-.card-label {
-  font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase;
-  color:var(--muted); margin-bottom:8px; font-weight:600;
-}
+.wave-card { width:100%; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; margin-bottom:10px; }
+.card-label { font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; font-weight:600; }
 canvas#waveCanvas { width:100%; height:36px; display:block; border-radius:6px; }
 
-/* ─── KEY + HISTORY ─────────────────────────────────────────────────────────── */
 .two-col { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; margin-bottom:10px; }
-
-.info-card {
-  background:var(--card); border:1px solid var(--border);
-  border-radius:var(--radius); padding:14px;
-}
+.info-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; }
 .info-card.accent-border { border-color:var(--accent); }
-
-.info-label {
-  font-size:0.58rem; letter-spacing:0.1em; text-transform:uppercase;
-  color:var(--muted); margin-bottom:6px; font-weight:600;
-}
-.info-value {
-  font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:700;
-  color:var(--text); line-height:1.1;
-}
+.info-label { font-size:0.58rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; font-weight:600; }
+.info-value { font-family:'Syne',sans-serif; font-size:1.15rem; font-weight:700; color:var(--text); line-height:1.1; }
 .info-card.accent-border .info-value { color:var(--accent); }
 .info-sub { font-size:0.62rem; color:var(--muted); margin-top:3px; }
 
-.history-card {
-  width:100%; background:var(--card); border:1px solid var(--border);
-  border-radius:var(--radius); padding:12px 14px; margin-bottom:10px;
-}
-.history-row {
-  display:flex; gap:5px; flex-wrap:wrap;
-  min-height:26px; align-items:center; margin-top:8px;
-}
-.note-chip {
-  background:var(--surface); border-radius:6px; padding:3px 9px;
-  font-size:0.68rem; font-family:'Syne',sans-serif; font-weight:700;
-  color:var(--muted); animation:chipIn 0.12s ease-out;
-}
-.note-chip.latest {
-  background:rgba(108,99,255,0.15); color:var(--accent);
-  border:1px solid rgba(108,99,255,0.3);
-}
+.history-card { width:100%; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; margin-bottom:10px; }
+.history-row { display:flex; gap:5px; flex-wrap:wrap; min-height:26px; align-items:center; margin-top:8px; }
+.note-chip { background:var(--surface); border-radius:6px; padding:3px 9px; font-size:0.68rem; font-family:'Syne',sans-serif; font-weight:700; color:var(--muted); animation:chipIn 0.12s ease-out; }
+.note-chip.latest { background:rgba(108,99,255,0.15); color:var(--accent); border:1px solid rgba(108,99,255,0.3); }
 @keyframes chipIn { from{transform:scale(0.75);opacity:0} to{transform:scale(1);opacity:1} }
 
-/* ─── BUTTONS ───────────────────────────────────────────────────────────────── */
-.mic-btn {
-  display:block; width:100%; max-width:240px; margin:4px auto 6px;
-  padding:14px; border:none; border-radius:50px;
-  font-family:'Inter',sans-serif; font-size:0.82rem; font-weight:700;
-  cursor:pointer; background:var(--accent); color:#fff;
-  letter-spacing:0.04em;
-  transition:opacity 0.2s, transform 0.15s;
-}
+.mic-btn { display:block; width:100%; max-width:240px; margin:4px auto 6px; padding:14px; border:none; border-radius:50px; font-family:'Inter',sans-serif; font-size:0.82rem; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; letter-spacing:0.04em; transition:opacity 0.2s, transform 0.15s; }
 .mic-btn:hover { opacity:0.88; transform:translateY(-1px); }
 .mic-btn.stop { background:var(--accent2); }
 
-.pulse-dot {
-  display:inline-block; width:7px; height:7px; border-radius:50%;
-  background:rgba(255,255,255,0.6); margin-right:8px; vertical-align:middle;
-}
+.pulse-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,0.5); margin-right:8px; vertical-align:middle; }
 .pulse-dot.on { background:#fff; animation:pulse 1.2s infinite; }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
 
-.ghost-btn {
-  display:block; margin:0 auto 8px;
-  background:transparent; border:1px solid var(--border);
-  border-radius:50px; padding:7px 20px;
-  color:var(--muted); font-family:'Inter',sans-serif;
-  font-size:0.68rem; cursor:pointer;
-  transition:border-color 0.2s, color 0.2s;
-}
+.ghost-btn { display:block; margin:0 auto 8px; background:transparent; border:1px solid var(--border); border-radius:50px; padding:7px 20px; color:var(--muted); font-family:'Inter',sans-serif; font-size:0.68rem; cursor:pointer; transition:border-color 0.2s, color 0.2s; }
 .ghost-btn:hover { border-color:var(--accent2); color:var(--accent2); }
 
-/* ─── PAYWALL ───────────────────────────────────────────────────────────────── */
-#paywallOverlay {
-  display:none; position:fixed; inset:0; z-index:100;
-  background:rgba(0,0,0,0.7); backdrop-filter:blur(8px);
-  align-items:center; justify-content:center; padding:20px;
-}
-.paywall-card {
-  background:var(--card); border:1px solid var(--border);
-  border-radius:24px; padding:28px 22px; width:100%;
-  max-width:340px; text-align:center;
-  box-shadow:0 24px 80px rgba(0,0,0,0.5);
-}
-.paywall-icon { font-size:2.2rem; margin-bottom:10px; }
-.paywall-title {
-  font-family:'Syne',sans-serif; font-weight:800; font-size:1.3rem;
-  color:var(--text); margin-bottom:8px; letter-spacing:-0.02em;
-}
-.paywall-sub { font-size:0.75rem; color:var(--sub); line-height:1.6; margin-bottom:18px; }
+/* ─── CAMPO HARMÔNICO ──────────────────────────────────────────────────────── */
+.harmonic-card { width:100%; background:var(--card); border:1px solid var(--border); border-radius:22px; padding:20px; margin-bottom:10px; position:relative; overflow:hidden; }
 
+.chord-selector { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
+.chord-root-btn { padding:7px 11px; border:1px solid var(--border); border-radius:8px; font-family:'Syne',sans-serif; font-size:0.75rem; font-weight:700; cursor:pointer; background:var(--surface); color:var(--sub); transition:all 0.15s; }
+.chord-root-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+
+.chord-type-row { display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+.chord-type-btn { padding:6px 14px; border:1px solid var(--border); border-radius:8px; font-family:'Inter',sans-serif; font-size:0.72rem; font-weight:600; cursor:pointer; background:var(--surface); color:var(--sub); transition:all 0.15s; }
+.chord-type-btn.active { border-color:var(--accent); color:var(--accent); }
+
+.harmonic-field { display:flex; flex-direction:column; gap:7px; }
+.degree-row { display:flex; align-items:center; gap:10px; background:var(--surface); border-radius:10px; padding:11px 14px; border:1px solid var(--border); }
+.degree-num { font-family:'Syne',sans-serif; font-size:0.68rem; font-weight:800; color:var(--muted); width:22px; flex-shrink:0; }
+.degree-chord { font-family:'Syne',sans-serif; font-size:1.05rem; font-weight:800; color:var(--text); flex:1; }
+.degree-function { font-size:0.6rem; color:var(--muted); font-weight:500; }
+.degree-quality { font-size:0.58rem; padding:2px 8px; border-radius:20px; font-weight:700; letter-spacing:0.06em; }
+.dq-major { background:rgba(108,99,255,0.15); color:var(--accent); border:1px solid rgba(108,99,255,0.2); }
+.dq-minor { background:rgba(148,163,184,0.08); color:var(--sub); border:1px solid var(--border); }
+.dq-dim   { background:rgba(244,63,94,0.1); color:var(--accent2); border:1px solid rgba(244,63,94,0.2); }
+
+/* PRO LOCK */
+.pro-lock { position:absolute; inset:0; border-radius:22px; background:rgba(10,10,18,0.85); backdrop-filter:blur(5px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; z-index:10; padding:20px; text-align:center; }
+.lock-icon { font-size:2.2rem; }
+.lock-title { font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; color:var(--text); }
+.lock-sub { font-size:0.73rem; color:var(--sub); line-height:1.6; max-width:220px; }
+.lock-btn { margin-top:4px; padding:11px 26px; border:none; border-radius:50px; font-family:'Inter',sans-serif; font-size:0.8rem; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; transition:opacity 0.2s; }
+.lock-btn:hover { opacity:0.85; }
+
+/* ─── PAYWALL ───────────────────────────────────────────────────────────────── */
+#paywallOverlay { display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.78); backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:20px; }
+.paywall-card { background:var(--card); border:1px solid var(--border); border-radius:24px; padding:28px 22px; width:100%; max-width:340px; text-align:center; box-shadow:0 24px 80px rgba(0,0,0,0.6); }
+.paywall-icon { font-size:2.2rem; margin-bottom:10px; }
+.paywall-title { font-family:'Syne',sans-serif; font-weight:800; font-size:1.3rem; color:var(--text); margin-bottom:8px; }
+.paywall-sub { font-size:0.75rem; color:var(--sub); line-height:1.6; margin-bottom:18px; }
 .paywall-features { text-align:left; margin-bottom:20px; display:flex; flex-direction:column; gap:10px; }
 .paywall-feature { display:flex; align-items:center; gap:12px; font-size:0.78rem; color:var(--text); }
-.feat-icon {
-  width:28px; height:28px; background:rgba(108,99,255,0.15);
-  border-radius:8px; display:flex; align-items:center;
-  justify-content:center; font-size:0.8rem; flex-shrink:0;
-  border:1px solid rgba(108,99,255,0.2);
-}
-
+.feat-icon { width:28px; height:28px; background:rgba(108,99,255,0.15); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.8rem; flex-shrink:0; border:1px solid rgba(108,99,255,0.2); }
 .paywall-price { margin-bottom:14px; }
 .paywall-price strong { display:block; font-family:'Syne',sans-serif; font-size:1.6rem; font-weight:800; color:var(--text); }
 .paywall-price span { font-size:0.7rem; color:var(--muted); }
-
-#btnCheckout {
-  width:100%; padding:14px; border:none; border-radius:50px;
-  font-family:'Inter',sans-serif; font-size:0.85rem; font-weight:700;
-  cursor:pointer; background:var(--accent); color:#fff; margin-bottom:10px;
-  transition:opacity 0.2s;
-}
+#btnCheckout { width:100%; padding:14px; border:none; border-radius:50px; font-family:'Inter',sans-serif; font-size:0.85rem; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; margin-bottom:10px; transition:opacity 0.2s; }
 #btnCheckout:hover { opacity:0.85; }
 #btnCheckout:disabled { opacity:0.5; }
-
 .paywall-dismiss { font-size:0.7rem; color:var(--muted); cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
 
-/* PIX QR */
-#pixQR { text-align:center; }
 #pixQRImg { width:170px; height:170px; border-radius:12px; margin:0 auto 14px; display:block; border:1px solid var(--border); }
-.pix-code-box {
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:10px; padding:10px 12px; margin-bottom:14px;
-}
+.pix-code-box { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:14px; }
 .pix-code-label { font-size:0.58rem; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px; font-weight:600; }
 #pixCode { font-size:0.6rem; color:var(--sub); word-break:break-all; line-height:1.5; max-height:56px; overflow:hidden; }
-
-.copy-btn {
-  width:100%; padding:12px; border:none; border-radius:50px;
-  font-family:'Inter',sans-serif; font-size:0.8rem; font-weight:700;
-  cursor:pointer; background:var(--accent3); color:#fff; margin-bottom:10px;
-}
+.copy-btn { width:100%; padding:12px; border:none; border-radius:50px; font-family:'Inter',sans-serif; font-size:0.8rem; font-weight:700; cursor:pointer; background:var(--accent3); color:#fff; margin-bottom:10px; }
 #pixStatus { font-size:0.72rem; color:var(--muted); margin-bottom:10px; }
 
-/* ─── TOAST ─────────────────────────────────────────────────────────────────── */
-#toast {
-  position:fixed; bottom:24px; left:50%;
-  transform:translateX(-50%) translateY(70px);
-  background:var(--card); border:1px solid var(--border);
-  color:var(--text); padding:10px 20px; border-radius:50px;
-  font-size:0.78rem; white-space:nowrap; z-index:200;
-  transition:transform 0.3s; pointer-events:none; font-weight:500;
-  box-shadow:0 8px 32px rgba(0,0,0,0.4);
-}
+#toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(70px); background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px 20px; border-radius:50px; font-size:0.78rem; white-space:nowrap; z-index:300; transition:transform 0.3s; pointer-events:none; font-weight:500; box-shadow:0 8px 32px rgba(0,0,0,0.5); }
 #toast.show { transform:translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
 
-<!-- ─── AUTH ─────────────────────────────────────────────────────────────── -->
+<!-- ─── WELCOME ─────────────────────────────────────────────────────────────── -->
+<div id="welcomeScreen">
+  <img src="LogoC.png" alt="Logo" class="welcome-logo" onerror="this.style.display='none'">
+  <p class="welcome-hi">Bem-vindo de volta</p>
+  <div class="welcome-name" id="welcomeName"></div>
+  <p class="welcome-sub">Detector de Tom · Afinador</p>
+</div>
+
+<!-- ─── AUTH ─────────────────────────────────────────────────────────────────── -->
 <div id="authScreen">
-  <div class="auth-logo">Detector<span>.</span></div>
+  <div class="auth-logo-wrap">
+    <img src="LogoC.png" alt="Logo" class="auth-logo-img" onerror="this.style.display='none'">
+    <div class="auth-logo-text">Detector de Tom</div>
+  </div>
   <p class="auth-tagline">Notas e tom em tempo real</p>
   <div class="auth-card">
     <div class="auth-tabs">
@@ -621,10 +494,13 @@ canvas#waveCanvas { width:100%; height:36px; display:block; border-radius:6px; }
   </div>
 </div>
 
-<!-- ─── APP ──────────────────────────────────────────────────────────────── -->
+<!-- ─── APP ──────────────────────────────────────────────────────────────────── -->
 <div id="appScreen">
   <div class="topbar">
-    <span class="topbar-logo">Detector / Afinador<span>.</span></span>
+    <div class="topbar-brand">
+      <img src="LogoC.png" alt="Logo" class="topbar-logo-img" onerror="this.style.display='none'">
+      <span class="topbar-logo-text">Detector de Tom</span>
+    </div>
     <div class="topbar-right">
       <span class="plan-badge free" id="planBadge">FREE</span>
       <button class="btn-icon" onclick="doLogout()">Sair</button>
@@ -633,73 +509,101 @@ canvas#waveCanvas { width:100%; height:36px; display:block; border-radius:6px; }
 
   <div id="freeBarWrap">
     <div class="free-bar-header">
-      <span id="freeBarLabel">0 / 200 detecções gratuitas</span>
-      <button class="btn-upgrade-small" onclick="showPaywall()">Upgrade Pro</button>
+      <span id="freeBarLabel">0 / 600 detecções gratuitas</span>
+      <button class="btn-upgrade-small" onclick="showPaywall()">⚡ Upgrade Pro</button>
     </div>
     <div class="free-bar-track"><div id="freeBarFill"></div></div>
-  </div>
-
-  <!-- NOTA PRINCIPAL -->
-  <div class="note-hero" id="noteDisplay">
-    <div class="note-name dim" id="bigNote">—</div>
-    <div class="note-meta dim" id="freqText">toque no microfone para começar</div>
-    <div class="cents-wrap">
-      <div class="cents-labels"><span>♭</span><span>centro</span><span>♯</span></div>
-      <div class="cents-track"><div class="cents-ball dim" id="centsNeedle"></div></div>
-      <div class="cents-status dim" id="centsText"></div>
-    </div>
-    <div class="pitch-bar"><div class="pitch-fill" id="confFill"></div></div>
-  </div>
-
-  <!-- WAVEFORM -->
-  <div class="wave-card">
-    <div class="card-label">Forma de onda</div>
-    <canvas id="waveCanvas" width="660" height="36"></canvas>
-  </div>
-
-  <!-- TOM -->
-  <div class="two-col">
-    <div class="info-card accent-border">
-      <div class="info-label">Tom detectado</div>
-      <div class="info-value" id="keyMajor">—</div>
-      <div class="info-sub"  id="keyMajorSub">cante para detectar</div>
-    </div>
-    <div class="info-card">
-      <div class="info-label">Relativo</div>
-      <div class="info-value" id="keyMinor">—</div>
-      <div class="info-sub"  id="keyMinorSub">—</div>
+    <div class="free-bar-footer">
+      <span>Plano Free</span>
+      <span id="freeBarPct">0% usado</span>
     </div>
   </div>
 
-  <!-- HISTÓRICO -->
-  <div class="history-card">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <div class="card-label" style="margin:0">Notas cantadas</div>
-      <span id="noteCount" style="font-size:0.68rem;color:var(--accent);font-weight:700">0</span>
-    </div>
-    <div class="history-row" id="notesHistory">
-      <span style="color:var(--muted);font-size:0.7rem">as notas aparecem aqui...</span>
-    </div>
+  <div class="tabs-nav">
+    <button class="tab-btn active" onclick="switchTab2('detector')">🎵 Detector</button>
+    <button class="tab-btn"        onclick="switchTab2('harmonico')">🎼 Campo Harmônico</button>
   </div>
 
-  <button class="mic-btn" id="startBtn" onclick="toggleMic()">
-    <span class="pulse-dot" id="statusDot"></span>Iniciar Microfone
-  </button>
-  <button class="ghost-btn" onclick="clearHistory()">limpar histórico</button>
-  <br>
-  <img src="LogoC.png" alt="Logo" style="width:50px;height:50px;object-fit:contain;opacity:1;display:block;margin:0 auto 10px auto;">
+  <!-- TAB DETECTOR -->
+  <div class="tab-panel active" id="tab-detector">
+    <div class="note-hero" id="noteDisplay">
+      <div class="note-name dim" id="bigNote">—</div>
+      <div class="note-meta dim" id="freqText">toque no microfone para começar</div>
+      <div class="cents-wrap">
+        <div class="cents-labels"><span>♭</span><span>centro</span><span>♯</span></div>
+        <div class="cents-track"><div class="cents-ball dim" id="centsNeedle"></div></div>
+        <div class="cents-status dim" id="centsText"></div>
+      </div>
+      <div class="pitch-bar"><div class="pitch-fill" id="confFill"></div></div>
+    </div>
+
+    <div class="wave-card">
+      <div class="card-label">Forma de onda</div>
+      <canvas id="waveCanvas" width="660" height="36"></canvas>
+    </div>
+
+    <div class="two-col">
+      <div class="info-card accent-border">
+        <div class="info-label">Tom detectado</div>
+        <div class="info-value" id="keyMajor">—</div>
+        <div class="info-sub"  id="keyMajorSub">cante para detectar</div>
+      </div>
+      <div class="info-card">
+        <div class="info-label">Relativo</div>
+        <div class="info-value" id="keyMinor">—</div>
+        <div class="info-sub"  id="keyMinorSub">—</div>
+      </div>
+    </div>
+
+    <div class="history-card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="card-label" style="margin:0">Notas cantadas</div>
+        <span id="noteCount" style="font-size:0.68rem;color:var(--accent);font-weight:700">0</span>
+      </div>
+      <div class="history-row" id="notesHistory">
+        <span style="color:var(--muted);font-size:0.7rem">as notas aparecem aqui...</span>
+      </div>
+    </div>
+
+    <button class="mic-btn" id="startBtn" onclick="toggleMic()">
+      <span class="pulse-dot" id="statusDot"></span>Iniciar Microfone
+    </button>
+    <button class="ghost-btn" onclick="clearHistory()">limpar histórico</button>
+  </div>
+
+  <!-- TAB CAMPO HARMÔNICO -->
+  <div class="tab-panel" id="tab-harmonico">
+    <div class="harmonic-card">
+      <div class="pro-lock" id="proLock">
+        <div class="lock-icon">🔒</div>
+        <div class="lock-title">Recurso Pro</div>
+        <p class="lock-sub">O Campo Harmônico completo está disponível no plano Pro. Desbloqueie com acesso vitalício por apenas R$29,90.</p>
+        <button class="lock-btn" onclick="showPaywall()">Desbloquear Pro</button>
+      </div>
+
+      <div class="card-label" style="margin-bottom:12px">Tônica</div>
+      <div class="chord-selector" id="chordRoots"></div>
+
+      <div class="card-label" style="margin-bottom:8px">Escala</div>
+      <div class="chord-type-row" id="chordTypes"></div>
+
+      <div class="card-label" style="margin-bottom:8px">Campo Harmônico</div>
+      <div class="harmonic-field" id="harmonicField"></div>
+    </div>
+  </div>
 </div>
 
-<!-- ─── PAYWALL ───────────────────────────────────────────────────────────── -->
+<!-- ─── PAYWALL ──────────────────────────────────────────────────────────────── -->
 <div id="paywallOverlay">
   <div class="paywall-card">
     <div id="pixOffer">
       <div class="paywall-icon">🎵</div>
       <div class="paywall-title">Acesso Completo</div>
-      <p class="paywall-sub">Você usou todas as suas detecções gratuitas. Desbloqueie o acesso vitalício.</p>
+      <p class="paywall-sub">Desbloqueie tudo com uma única compra.</p>
       <div class="paywall-features">
         <div class="paywall-feature"><div class="feat-icon">∞</div><span>Detecções ilimitadas</span></div>
-        <div class="paywall-feature"><div class="feat-icon">🎼</div><span>Todas as escalas e modos</span></div>
+        <div class="paywall-feature"><div class="feat-icon">🎼</div><span>Campo Harmônico completo</span></div>
+        <div class="paywall-feature"><div class="feat-icon">🎵</div><span>Todas as escalas e modos</span></div>
         <div class="paywall-feature"><div class="feat-icon">⚡</div><span>Acesso vitalício — pague uma vez</span></div>
       </div>
       <div class="paywall-price">
@@ -709,17 +613,16 @@ canvas#waveCanvas { width:100%; height:36px; display:block; border-radius:6px; }
       <button id="btnCheckout" onclick="startCheckout()">Pagar com Pix</button>
       <div class="paywall-dismiss" onclick="hidePaywall()">Continuar no plano grátis</div>
     </div>
-
-    <div id="pixQR" style="display:none">
+    <div id="pixQR" style="display:none;text-align:center">
       <div class="paywall-title" style="font-size:1rem;margin-bottom:6px">Pague com Pix</div>
       <p style="font-size:0.72rem;color:var(--sub);margin-bottom:14px">Escaneie o QR Code ou copie o código</p>
-      <img id="pixQRImg" src="" style="width:170px;height:170px;border-radius:12px;margin:0 auto 14px;display:block;border:1px solid var(--border)">
+      <img id="pixQRImg" src="">
       <div class="pix-code-box">
         <div class="pix-code-label">Pix Copia e Cola</div>
         <div id="pixCode"></div>
       </div>
       <button class="copy-btn" onclick="copyPix()">Copiar código Pix</button>
-      <div id="pixStatus" style="font-size:0.72rem;color:var(--muted);margin-bottom:10px">Aguardando pagamento...</div>
+      <div id="pixStatus">Aguardando pagamento...</div>
       <div class="paywall-dismiss" onclick="hidePaywall()">Fechar</div>
     </div>
   </div>
@@ -728,278 +631,255 @@ canvas#waveCanvas { width:100%; height:36px; display:block; border-radius:6px; }
 <div id="toast"></div>
 
 <script>
-// ─── AUTH TAB ─────────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  const isLogin = tab === 'login';
-  document.getElementById('tabLogin').className    = 'auth-tab' + (isLogin ? ' active' : '');
-  document.getElementById('tabRegister').className = 'auth-tab' + (!isLogin ? ' active' : '');
-  document.getElementById('btnLogin').style.display    = isLogin ? 'block' : 'none';
-  document.getElementById('btnRegister').style.display = isLogin ? 'none'  : 'block';
+  const isLogin = tab==='login';
+  document.getElementById('tabLogin').className    = 'auth-tab'+(isLogin?' active':'');
+  document.getElementById('tabRegister').className = 'auth-tab'+(!isLogin?' active':'');
+  document.getElementById('btnLogin').style.display    = isLogin?'block':'none';
+  document.getElementById('btnRegister').style.display = isLogin?'none':'block';
   document.getElementById('authError').textContent = '';
+}
+
+function switchTab2(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.className='tab-btn'+((['detector','harmonico'][i]===tab)?' active':'');
+  });
+  document.getElementById('tab-detector').className  = 'tab-panel'+(tab==='detector'?' active':'');
+  document.getElementById('tab-harmonico').className = 'tab-panel'+(tab==='harmonico'?' active':'');
+  if (tab==='harmonico') renderHarmonicField();
 }
 
 // ─── MUSIC THEORY ─────────────────────────────────────────────────────────────
 const NOTE_NAMES    = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const NOTE_NAMES_PT = ['Dó','Dó#','Ré','Ré#','Mi','Fá','Fá#','Sol','Sol#','Lá','Lá#','Si'];
-const SCALES = {
-  'Maior':       [0,2,4,5,7,9,11],
-  'Menor':       [0,2,3,5,7,8,10],
-  'Pent. Maior': [0,2,4,7,9],
-  'Pent. Menor': [0,3,5,7,10],
-};
+const SCALES = { 'Maior':[0,2,4,5,7,9,11], 'Menor':[0,2,3,5,7,8,10], 'Pent. Maior':[0,2,4,7,9], 'Pent. Menor':[0,3,5,7,10] };
 
-function buildScale(root, intervals) { return intervals.map(i => (root+i)%12); }
+const MAJOR_QUALITIES = ['Maior','Menor','Menor','Maior','Maior','Menor','Dim'];
+const MINOR_QUALITIES = ['Menor','Dim','Maior','Menor','Menor','Maior','Maior'];
+const DEGREES         = ['I','II','III','IV','V','VI','VII'];
+const FUNCTIONS       = ['Tônica','Supertônica','Mediante','Subdominante','Dominante','Superdominante','Sensível'];
+const CHORD_TYPES     = ['Maior','Menor'];
 
-function keyScore(counts, root, intervals) {
-  const scale = buildScale(root, intervals);
-  let score=0, total=0;
-  counts.forEach((c,n) => { total+=c; if(scale.includes(n)) score+=c; });
-  return total > 0 ? (score/total) * (intervals.length/7) : 0;
+let selectedRoot=0, selectedType='Maior';
+
+function renderHarmonicField() {
+  // Pro lock
+  document.getElementById('proLock').style.display =
+    (window._vp && window._vp.isPro) ? 'none' : 'flex';
+
+  // Roots
+  const rootsEl = document.getElementById('chordRoots');
+  if (!rootsEl.children.length) {
+    NOTE_NAMES.forEach((n,i) => {
+      const btn = document.createElement('button');
+      btn.className = 'chord-root-btn'+(i===selectedRoot?' active':'');
+      btn.textContent = n;
+      btn.onclick = () => { selectedRoot=i; renderHarmonicField(); };
+      rootsEl.appendChild(btn);
+    });
+  } else {
+    rootsEl.querySelectorAll('.chord-root-btn').forEach((b,i) => {
+      b.className='chord-root-btn'+(i===selectedRoot?' active':'');
+    });
+  }
+
+  // Types
+  const typesEl = document.getElementById('chordTypes');
+  if (!typesEl.children.length) {
+    CHORD_TYPES.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'chord-type-btn'+(t===selectedType?' active':'');
+      btn.textContent = t;
+      btn.onclick = () => { selectedType=t; renderHarmonicField(); };
+      typesEl.appendChild(btn);
+    });
+  } else {
+    typesEl.querySelectorAll('.chord-type-btn').forEach((b,i) => {
+      b.className='chord-type-btn'+(CHORD_TYPES[i]===selectedType?' active':'');
+    });
+  }
+
+  // Field
+  const intervals = selectedType==='Maior' ? [0,2,4,5,7,9,11] : [0,2,3,5,7,8,10];
+  const qualities = selectedType==='Maior' ? MAJOR_QUALITIES : MINOR_QUALITIES;
+  const field = document.getElementById('harmonicField');
+  field.innerHTML = '';
+  intervals.forEach((interval,i) => {
+    const rootIdx = (selectedRoot+interval)%12;
+    const q = qualities[i];
+    const qClass = q==='Maior'?'dq-major':q==='Dim'?'dq-dim':'dq-minor';
+    const chordName = NOTE_NAMES[rootIdx]+(q==='Menor'?'m':q==='Dim'?'°':'');
+    const row = document.createElement('div');
+    row.className = 'degree-row';
+    row.innerHTML = `
+      <span class="degree-num">${DEGREES[i]}</span>
+      <span class="degree-chord">${chordName}</span>
+      <span class="degree-function">${FUNCTIONS[i]}</span>
+      <span class="degree-quality ${qClass}">${q}</span>
+    `;
+    field.appendChild(row);
+  });
 }
 
-function detectKey(history) {
-  if (history.length < 3) return null;
-  const counts = new Array(12).fill(0);
-  history.forEach(n => counts[n%12]++);
-  let bestScore=-1, bestRoot=0, bestScale='Maior';
-  for (const [name, intervals] of Object.entries(SCALES))
-    for (let r=0; r<12; r++) {
-      const s = keyScore(counts, r, intervals);
-      if (s > bestScore) { bestScore=s; bestRoot=r; bestScale=name; }
+function buildScale(root,intervals){return intervals.map(i=>(root+i)%12);}
+function keyScore(counts,root,intervals){
+  const scale=buildScale(root,intervals);let score=0,total=0;
+  counts.forEach((c,n)=>{total+=c;if(scale.includes(n))score+=c;});
+  return total>0?(score/total)*(intervals.length/7):0;
+}
+function detectKey(history){
+  if(history.length<3)return null;
+  const counts=new Array(12).fill(0);
+  history.forEach(n=>counts[n%12]++);
+  let bestScore=-1,bestRoot=0,bestScale='Maior';
+  for(const [name,intervals] of Object.entries(SCALES))
+    for(let r=0;r<12;r++){
+      const s=keyScore(counts,r,intervals);
+      if(s>bestScore){bestScore=s;bestRoot=r;bestScale=name;}
     }
-  return { root:bestRoot, score:bestScore, scale:bestScale };
+  return{root:bestRoot,score:bestScore,scale:bestScale};
 }
 
-// ─── PITCH DETECTION ──────────────────────────────────────────────────────────
-function autoCorrelate(buf, sampleRate) {
-  const SIZE=buf.length, MAX=Math.floor(SIZE/2);
-  let rms=0;
-  for (let i=0;i<SIZE;i++) rms+=buf[i]*buf[i];
-  rms=Math.sqrt(rms/SIZE);
-  if (rms<0.002) return -1;
-  let best_offset=-1, best_corr=0, lastCorr=1, foundGood=false, corr=0;
-  for (let offset=0;offset<MAX;offset++) {
-    corr=0;
-    for (let i=0;i<MAX;i++) corr+=buf[i]*buf[i+offset];
-    corr/=MAX;
-    if (foundGood && corr<lastCorr) {
-      if (best_corr>0.8) {
+function autoCorrelate(buf,sampleRate){
+  const SIZE=buf.length,MAX=Math.floor(SIZE/2);
+  let rms=0;for(let i=0;i<SIZE;i++)rms+=buf[i]*buf[i];
+  rms=Math.sqrt(rms/SIZE);if(rms<0.002)return -1;
+  let best_offset=-1,best_corr=0,lastCorr=1,foundGood=false,corr=0;
+  for(let offset=0;offset<MAX;offset++){
+    corr=0;for(let i=0;i<MAX;i++)corr+=buf[i]*buf[i+offset];corr/=MAX;
+    if(foundGood&&corr<lastCorr){
+      if(best_corr>0.8){
         let shift=0;
-        if (offset>2) {
-          const d0=corr-lastCorr;
-          const next=offset+1<MAX?(()=>{let c=0;for(let i=0;i<MAX;i++)c+=buf[i]*buf[i+offset+1];return c/MAX;})():corr;
-          const d1=corr-next;
-          shift=d1/(d0+d1)*0.5;
-        }
+        if(offset>2){const d0=corr-lastCorr;const next=offset+1<MAX?(()=>{let c=0;for(let i=0;i<MAX;i++)c+=buf[i]*buf[i+offset+1];return c/MAX;})():corr;const d1=corr-next;shift=d1/(d0+d1)*0.5;}
         return sampleRate/(best_offset+shift);
       }
       foundGood=false;
     }
-    if (!foundGood&&corr>0.8) foundGood=true;
-    if (corr>best_corr){best_corr=corr;best_offset=offset;}
+    if(!foundGood&&corr>0.8)foundGood=true;
+    if(corr>best_corr){best_corr=corr;best_offset=offset;}
     lastCorr=corr;
   }
-  if (best_corr>0.005) return sampleRate/best_offset;
-  return -1;
+  if(best_corr>0.005)return sampleRate/best_offset;return -1;
 }
 
-function freqToNote(freq) {
-  if (freq<=0) return null;
-  const noteNum = 12*(Math.log2(freq/440))+69;
-  const rounded = Math.round(noteNum);
-  const cents   = (noteNum-rounded)*100;
-  const idx     = ((rounded%12)+12)%12;
-  return { name:NOTE_NAMES[idx], namePt:NOTE_NAMES_PT[idx], octave:Math.floor(rounded/12)-1, cents, index:idx };
+function freqToNote(freq){
+  if(freq<=0)return null;
+  const noteNum=12*(Math.log2(freq/440))+69;const rounded=Math.round(noteNum);
+  const cents=(noteNum-rounded)*100;const idx=((rounded%12)+12)%12;
+  return{name:NOTE_NAMES[idx],namePt:NOTE_NAMES_PT[idx],octave:Math.floor(rounded/12)-1,cents,index:idx};
 }
 
-// ─── STATE ────────────────────────────────────────────────────────────────────
-let audioCtx=null, analyser=null, source=null, micStream=null;
-let running=false;
-let noteHistory=[], noteDisplayHistory=[];
-let animFrame=null, lastNoteName='', lastNoteTime=0;
+let audioCtx=null,analyser=null,source=null,micStream=null,running=false;
+let noteHistory=[],noteDisplayHistory=[],animFrame=null,lastNoteName='',lastNoteTime=0;
+let lastNoteInfo=null,silenceTimer=null;
+const SILENCE_HOLD_MS=1500;
+const canvas=document.getElementById('waveCanvas');
+const waveCtx=canvas.getContext('2d');
 
-// Persistência da nota — mantém a última nota visível por 1.5s após silêncio
-let lastNoteInfo=null, lastNoteFreq=0, silenceTimer=null;
-const SILENCE_HOLD_MS = 1500;
-
-const canvas  = document.getElementById('waveCanvas');
-const waveCtx = canvas.getContext('2d');
-
-// ─── UI ───────────────────────────────────────────────────────────────────────
-function updateNoteDisplay(noteInfo, freq) {
-  const bigNote   = document.getElementById('bigNote');
-  const freqText  = document.getElementById('freqText');
-  const needle    = document.getElementById('centsNeedle');
-  const centsText = document.getElementById('centsText');
-  const display   = document.getElementById('noteDisplay');
-  const confFill  = document.getElementById('confFill');
-
-  if (noteInfo) {
-    // Nota detectada — limpa o timer de silêncio
-    if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer=null; }
-    lastNoteInfo=noteInfo; lastNoteFreq=freq;
-
-    display.classList.add('active');
-    bigNote.textContent = noteInfo.name + noteInfo.octave;
-    bigNote.className   = 'note-name';
-    freqText.innerHTML  = `${noteInfo.namePt} · <strong>${freq.toFixed(1)} Hz</strong>`;
-    freqText.className  = 'note-meta';
-
-    const pos = 50 + (noteInfo.cents/50)*44;
-    needle.style.left = pos+'%';
-    const absCents = Math.abs(noteInfo.cents);
-    confFill.style.width = Math.max(0, 100-absCents*2)+'%';
-
-    needle.classList.remove('in-tune','sharp','flat','dim');
-    centsText.className = 'cents-status';
-    if (absCents<10) {
-      needle.classList.add('in-tune');
-      centsText.textContent='afinado';
-      centsText.style.color='var(--accent3)';
-    } else if (noteInfo.cents>0) {
-      needle.classList.add('sharp');
-      centsText.textContent=`+${noteInfo.cents.toFixed(0)}¢ sustenido`;
-      centsText.style.color='var(--accent2)';
-    } else {
-      needle.classList.add('flat');
-      centsText.textContent=`${noteInfo.cents.toFixed(0)}¢ bemol`;
-      centsText.style.color='var(--gold)';
-    }
-  } else {
-    // Silêncio — aguarda SILENCE_HOLD_MS antes de "apagar"
-    if (!silenceTimer && lastNoteInfo) {
-      silenceTimer = setTimeout(() => {
-        bigNote.className   = 'note-name dim';
-        freqText.className  = 'note-meta dim';
-        needle.className    = 'cents-ball dim';
-        centsText.className = 'cents-status dim';
-        centsText.textContent = '';
-        confFill.style.width  = '0%';
-        display.classList.remove('active');
-        silenceTimer=null;
-      }, SILENCE_HOLD_MS);
+function updateNoteDisplay(noteInfo,freq){
+  const bigNote=document.getElementById('bigNote'),freqText=document.getElementById('freqText');
+  const needle=document.getElementById('centsNeedle'),centsText=document.getElementById('centsText');
+  const display=document.getElementById('noteDisplay'),confFill=document.getElementById('confFill');
+  if(noteInfo){
+    if(silenceTimer){clearTimeout(silenceTimer);silenceTimer=null;}
+    lastNoteInfo=noteInfo;display.classList.add('active');
+    bigNote.textContent=noteInfo.name+noteInfo.octave;bigNote.className='note-name';
+    freqText.innerHTML=`${noteInfo.namePt} · <strong>${freq.toFixed(1)} Hz</strong>`;freqText.className='note-meta';
+    needle.style.left=(50+(noteInfo.cents/50)*44)+'%';
+    const ac=Math.abs(noteInfo.cents);confFill.style.width=Math.max(0,100-ac*2)+'%';
+    needle.classList.remove('in-tune','sharp','flat','dim');centsText.className='cents-status';
+    if(ac<10){needle.classList.add('in-tune');centsText.textContent='afinado';centsText.style.color='var(--accent3)';}
+    else if(noteInfo.cents>0){needle.classList.add('sharp');centsText.textContent=`+${noteInfo.cents.toFixed(0)}¢ sustenido`;centsText.style.color='var(--accent2)';}
+    else{needle.classList.add('flat');centsText.textContent=`${noteInfo.cents.toFixed(0)}¢ bemol`;centsText.style.color='var(--gold)';}
+  }else{
+    if(!silenceTimer&&lastNoteInfo){
+      silenceTimer=setTimeout(()=>{
+        bigNote.className='note-name dim';freqText.className='note-meta dim';
+        needle.className='cents-ball dim';centsText.className='cents-status dim';
+        centsText.textContent='';confFill.style.width='0%';display.classList.remove('active');silenceTimer=null;
+      },SILENCE_HOLD_MS);
     }
   }
 }
 
-function updateKeyDisplay() {
-  const result = detectKey(noteHistory);
-  const keyMajor    = document.getElementById('keyMajor');
-  const keyMajorSub = document.getElementById('keyMajorSub');
-  const keyMinor    = document.getElementById('keyMinor');
-  const keyMinorSub = document.getElementById('keyMinorSub');
-  if (!result) {
-    keyMajor.textContent='—'; keyMajorSub.textContent='cante mais notas';
-    keyMinor.textContent='—'; keyMinorSub.textContent='—'; return;
-  }
-  const r   = result.root;
-  const pct = Math.min(99, Math.round(result.score*100/(result.scale.includes('Pent')?(5/7):1)));
-  keyMajor.textContent    = `${NOTE_NAMES[r]} ${result.scale}`;
-  keyMajorSub.textContent = `${NOTE_NAMES_PT[r]} · ${pct}% fit`;
-  if (result.scale==='Maior')            { const rel=(r+9)%12; keyMinor.textContent=`${NOTE_NAMES[rel]}m`; keyMinorSub.textContent=`${NOTE_NAMES_PT[rel]} menor`; }
-  else if (result.scale==='Menor')       { const rel=(r+3)%12; keyMinor.textContent=`${NOTE_NAMES[rel]}`; keyMinorSub.textContent=`${NOTE_NAMES_PT[rel]} maior`; }
-  else if (result.scale==='Pent. Maior') { const rel=(r+9)%12; keyMinor.textContent=`${NOTE_NAMES[rel]} P.m`; keyMinorSub.textContent=`pent. menor rel.`; }
-  else                                   { const rel=(r+3)%12; keyMinor.textContent=`${NOTE_NAMES[rel]} P.M`; keyMinorSub.textContent=`pent. maior rel.`; }
+function updateKeyDisplay(){
+  const result=detectKey(noteHistory);
+  const km=document.getElementById('keyMajor'),kms=document.getElementById('keyMajorSub');
+  const kn=document.getElementById('keyMinor'),kns=document.getElementById('keyMinorSub');
+  if(!result){km.textContent='—';kms.textContent='cante mais notas';kn.textContent='—';kns.textContent='—';return;}
+  const r=result.root,pct=Math.min(99,Math.round(result.score*100/(result.scale.includes('Pent')?(5/7):1)));
+  km.textContent=`${NOTE_NAMES[r]} ${result.scale}`;kms.textContent=`${NOTE_NAMES_PT[r]} · ${pct}% fit`;
+  if(result.scale==='Maior'){const rel=(r+9)%12;kn.textContent=`${NOTE_NAMES[rel]}m`;kns.textContent=`${NOTE_NAMES_PT[rel]} menor`;}
+  else if(result.scale==='Menor'){const rel=(r+3)%12;kn.textContent=NOTE_NAMES[rel];kns.textContent=`${NOTE_NAMES_PT[rel]} maior`;}
+  else if(result.scale==='Pent. Maior'){const rel=(r+9)%12;kn.textContent=`${NOTE_NAMES[rel]} P.m`;kns.textContent='pent. menor rel.';}
+  else{const rel=(r+3)%12;kn.textContent=`${NOTE_NAMES[rel]} P.M`;kns.textContent='pent. maior rel.';}
 }
 
-function addNoteToHistory(noteName, noteIndex) {
+function addNoteToHistory(noteName,noteIndex){
   const now=Date.now();
-  if (noteName===lastNoteName && now-lastNoteTime<400) return;
-  lastNoteName=noteName; lastNoteTime=now;
-
-  // Conta detecção aqui — separado da atualização do tom
-  if (window._vp) { if (!window.incrementDetection()) return; }
-
-  noteHistory.push(noteIndex);
-  if (noteHistory.length>80) noteHistory.shift();
-  noteDisplayHistory.unshift(noteName);
-  if (noteDisplayHistory.length>20) noteDisplayHistory.pop();
-  renderNoteHistory();
-  updateKeyDisplay();
+  if(noteName===lastNoteName&&now-lastNoteTime<400)return;
+  lastNoteName=noteName;lastNoteTime=now;
+  if(window._vp){if(!window.incrementDetection())return;}
+  noteHistory.push(noteIndex);if(noteHistory.length>80)noteHistory.shift();
+  noteDisplayHistory.unshift(noteName);if(noteDisplayHistory.length>20)noteDisplayHistory.pop();
+  renderNoteHistory();updateKeyDisplay();
 }
 
-function renderNoteHistory() {
-  const container=document.getElementById('notesHistory');
-  const count=document.getElementById('noteCount');
-  if (!noteDisplayHistory.length) {
-    container.innerHTML='<span style="color:var(--muted);font-size:0.7rem">as notas aparecem aqui...</span>';
-    count.textContent='0'; return;
-  }
+function renderNoteHistory(){
+  const container=document.getElementById('notesHistory'),count=document.getElementById('noteCount');
+  if(!noteDisplayHistory.length){container.innerHTML='<span style="color:var(--muted);font-size:0.7rem">as notas aparecem aqui...</span>';count.textContent='0';return;}
   count.textContent=noteHistory.length;
-  container.innerHTML=noteDisplayHistory.map((n,i)=>
-    `<span class="note-chip${i===0?' latest':''}" style="${i>0?`opacity:${Math.max(0.2,1-i*0.07)}`:''}">${n}</span>`
-  ).join('');
+  container.innerHTML=noteDisplayHistory.map((n,i)=>`<span class="note-chip${i===0?' latest':''}" style="${i>0?`opacity:${Math.max(0.2,1-i*0.07)}`:''}">${n}</span>`).join('');
 }
 
-function drawWaveform(dataArray) {
-  const w=canvas.width, h=canvas.height;
-  waveCtx.clearRect(0,0,w,h);
-  waveCtx.fillStyle='#1c1c28'; waveCtx.fillRect(0,0,w,h);
-  waveCtx.lineWidth=1.5;
-  waveCtx.strokeStyle=running?'rgba(108,99,255,0.8)':'rgba(42,42,58,0.8)';
-  waveCtx.beginPath();
-  const sliceWidth=w/dataArray.length; let x=0;
-  for (let i=0;i<dataArray.length;i++) {
-    const v=dataArray[i]/128.0, y=v*h/2;
-    i===0?waveCtx.moveTo(x,y):waveCtx.lineTo(x,y);
-    x+=sliceWidth;
-  }
-  waveCtx.lineTo(w,h/2); waveCtx.stroke();
+function drawWaveform(dataArray){
+  const w=canvas.width,h=canvas.height;
+  waveCtx.clearRect(0,0,w,h);waveCtx.fillStyle='#1a1a28';waveCtx.fillRect(0,0,w,h);
+  waveCtx.lineWidth=1.5;waveCtx.strokeStyle=running?'rgba(108,99,255,0.8)':'rgba(38,38,56,0.8)';
+  waveCtx.beginPath();const sliceWidth=w/dataArray.length;let x=0;
+  for(let i=0;i<dataArray.length;i++){const v=dataArray[i]/128.0,y=v*h/2;i===0?waveCtx.moveTo(x,y):waveCtx.lineTo(x,y);x+=sliceWidth;}
+  waveCtx.lineTo(w,h/2);waveCtx.stroke();
 }
 
-// ─── AUDIO LOOP ───────────────────────────────────────────────────────────────
-function audioLoop() {
-  if (!running) return;
-  animFrame=requestAnimationFrame(audioLoop);
-  const timeDomain=new Float32Array(analyser.fftSize);
-  const byteTime=new Uint8Array(analyser.fftSize);
-  analyser.getFloatTimeDomainData(timeDomain);
-  analyser.getByteTimeDomainData(byteTime);
-  drawWaveform(byteTime);
-  const freq=autoCorrelate(timeDomain, audioCtx.sampleRate);
-  if (freq>60 && freq<1200) {
-    const noteInfo=freqToNote(freq);
-    if (noteInfo) { updateNoteDisplay(noteInfo,freq); addNoteToHistory(noteInfo.name+noteInfo.octave,noteInfo.index); }
-  } else { updateNoteDisplay(null); }
+function audioLoop(){
+  if(!running)return;animFrame=requestAnimationFrame(audioLoop);
+  const td=new Float32Array(analyser.fftSize),bt=new Uint8Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(td);analyser.getByteTimeDomainData(bt);drawWaveform(bt);
+  const freq=autoCorrelate(td,audioCtx.sampleRate);
+  if(freq>60&&freq<1200){const ni=freqToNote(freq);if(ni){updateNoteDisplay(ni,freq);addNoteToHistory(ni.name+ni.octave,ni.index);}}
+  else{updateNoteDisplay(null);}
 }
 
-// ─── MIC CONTROL ──────────────────────────────────────────────────────────────
-async function toggleMic() { running?stopMic():await startMic(); }
+async function toggleMic(){running?stopMic():await startMic();}
 
-async function startMic() {
-  if (window._vp && !window._vp.isPro && window._vp.detectionCount>=window._vp.FREE_LIMIT) { showPaywall(); return; }
-  try {
+async function startMic(){
+  if(window._vp&&!window._vp.isPro&&window._vp.detectionCount>=window._vp.FREE_LIMIT){showPaywall();return;}
+  try{
     micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
-    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-    analyser=audioCtx.createAnalyser(); analyser.fftSize=2048; analyser.smoothingTimeConstant=0.5;
-    const gain=audioCtx.createGain(); gain.gain.value=4.0;
-    source=audioCtx.createMediaStreamSource(micStream);
-    source.connect(gain); gain.connect(analyser);
+    audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    analyser=audioCtx.createAnalyser();analyser.fftSize=2048;analyser.smoothingTimeConstant=0.5;
+    const gain=audioCtx.createGain();gain.gain.value=4.0;
+    source=audioCtx.createMediaStreamSource(micStream);source.connect(gain);gain.connect(analyser);
     running=true;
     document.getElementById('startBtn').innerHTML='<span class="pulse-dot on"></span>Parar';
     document.getElementById('startBtn').classList.add('stop');
     audioLoop();
-  } catch(e) { alert('Erro ao acessar microfone: '+e.message); }
+  }catch(e){alert('Erro ao acessar microfone: '+e.message);}
 }
 
-function stopMic() {
-  running=false;
-  if (animFrame) cancelAnimationFrame(animFrame);
-  if (micStream) micStream.getTracks().forEach(t=>t.stop());
-  if (audioCtx) audioCtx.close();
+function stopMic(){
+  running=false;if(animFrame)cancelAnimationFrame(animFrame);
+  if(micStream)micStream.getTracks().forEach(t=>t.stop());if(audioCtx)audioCtx.close();
   document.getElementById('startBtn').innerHTML='<span class="pulse-dot"></span>Iniciar Microfone';
-  document.getElementById('startBtn').classList.remove('stop');
-  updateNoteDisplay(null);
-  const w=canvas.width,h=canvas.height;
-  waveCtx.clearRect(0,0,w,h);
-  waveCtx.fillStyle='#1c1c28'; waveCtx.fillRect(0,0,w,h);
-  waveCtx.strokeStyle='rgba(42,42,58,0.8)'; waveCtx.lineWidth=1.5;
-  waveCtx.beginPath(); waveCtx.moveTo(0,h/2); waveCtx.lineTo(w,h/2); waveCtx.stroke();
+  document.getElementById('startBtn').classList.remove('stop');updateNoteDisplay(null);
+  const w=canvas.width,h=canvas.height;waveCtx.clearRect(0,0,w,h);
+  waveCtx.fillStyle='#1a1a28';waveCtx.fillRect(0,0,w,h);
+  waveCtx.strokeStyle='rgba(38,38,56,0.8)';waveCtx.lineWidth=1.5;
+  waveCtx.beginPath();waveCtx.moveTo(0,h/2);waveCtx.lineTo(w,h/2);waveCtx.stroke();
 }
 
-function clearHistory() {
-  noteHistory=[]; noteDisplayHistory=[]; lastNoteInfo=null;
-  renderNoteHistory();
+function clearHistory(){
+  noteHistory=[];noteDisplayHistory=[];lastNoteInfo=null;renderNoteHistory();
   ['keyMajor','keyMinor'].forEach(id=>document.getElementById(id).textContent='—');
   document.getElementById('keyMajorSub').textContent='cante mais notas';
   document.getElementById('keyMinorSub').textContent='—';

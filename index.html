@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Detector de Tom</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,700&display=swap" rel="stylesheet">
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -256,14 +256,31 @@
   --r:       12px;
 }
 
+:root.light {
+  --bg:      #f4f4f8;
+  --surface: #ffffff;
+  --card:    #ffffff;
+  --border:  #e0e0ee;
+  --border2: #c8c8e0;
+  --accent:  #5a52e0;
+  --accent2: #e02d50;
+  --accent3: #0aaa72;
+  --gold:    #d4870a;
+  --text:    #181828;
+  --sub:     #5a5a80;
+  --muted:   #9898b8;
+  --r:       12px;
+}
+
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
 body {
   background: var(--bg); color: var(--text);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   min-height: 100vh; display: flex;
   flex-direction: column; align-items: center;
   padding: 0 12px 32px;
+  transition: background 0.3s, color 0.3s;
 }
 
 /* ── WELCOME ────────────────────────────────────────────────────────────────── */
@@ -280,7 +297,7 @@ body {
 
 .w-hi   { font-size:0.68rem; color:var(--muted); letter-spacing:0.16em; text-transform:uppercase; margin-bottom:8px; font-weight:500; animation:up 0.4s ease 0.15s both; }
 .w-name {
-  font-family:'Syne',sans-serif; font-weight:800;
+  font-family:'Fraunces',serif; font-weight:800;
   font-size:clamp(1.4rem, 8vw, 2.2rem); /* ← nunca ultrapassa a tela */
   color:var(--text); letter-spacing:-0.03em;
   text-align:center; max-width:90vw; /* ← garante margem */
@@ -299,24 +316,24 @@ body {
 
 .auth-logo-wrap { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
 .auth-logo-img  { width:42px; height:42px; border-radius:12px; object-fit:contain; }
-.auth-logo-text { font-family:'Syne',sans-serif; font-weight:800; font-size:1.3rem; letter-spacing:-0.03em; color:var(--text); }
+.auth-logo-text { font-family:'Fraunces',serif; font-weight:800; font-size:1.3rem; letter-spacing:-0.03em; color:var(--text); }
 .auth-tagline   { font-size:0.65rem; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:24px; }
 
 .auth-card { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:22px 18px; width:100%; }
 
 .auth-tabs { display:flex; background:var(--surface); border-radius:9px; padding:3px; margin-bottom:18px; gap:3px; }
-.auth-tab  { flex:1; padding:7px; border:none; border-radius:7px; font-family:'Inter',sans-serif; font-size:0.76rem; font-weight:600; cursor:pointer; background:transparent; color:var(--muted); transition:all 0.2s; }
+.auth-tab  { flex:1; padding:7px; border:none; border-radius:7px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.76rem; font-weight:600; cursor:pointer; background:transparent; color:var(--muted); transition:all 0.2s; }
 .auth-tab.active { background:var(--card); color:var(--accent); }
 
 .auth-field       { margin-bottom:12px; }
 .auth-field label { display:block; font-size:0.65rem; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:5px; font-weight:500; }
-.auth-field input { width:100%; padding:11px 13px; border:1px solid var(--border); border-radius:9px; font-family:'Inter',sans-serif; font-size:0.86rem; color:var(--text); background:var(--surface); outline:none; transition:border-color 0.2s; }
+.auth-field input { width:100%; padding:11px 13px; border:1px solid var(--border); border-radius:9px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.86rem; color:var(--text); background:var(--surface); outline:none; transition:border-color 0.2s; }
 .auth-field input:focus { border-color:var(--accent); }
 .auth-field input::placeholder { color:var(--muted); }
 
 .auth-error { font-size:0.7rem; color:var(--accent2); min-height:1.2em; margin-bottom:8px; text-align:center; }
 
-.btn-primary { width:100%; padding:12px; border:none; border-radius:50px; font-family:'Inter',sans-serif; font-size:0.84rem; font-weight:600; cursor:pointer; background:var(--accent); color:#fff; transition:opacity 0.2s, transform 0.15s; }
+.btn-primary { width:100%; padding:12px; border:none; border-radius:50px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.84rem; font-weight:600; cursor:pointer; background:var(--accent); color:#fff; transition:opacity 0.2s, transform 0.15s; }
 .btn-primary:hover { opacity:0.88; transform:translateY(-1px); }
 .btn-primary:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
 .btn-primary.secondary { background:var(--surface); color:var(--sub); border:1px solid var(--border); }
@@ -330,14 +347,14 @@ body {
 .topbar { display:flex; align-items:center; justify-content:space-between; width:100%; padding:12px 0 8px; }
 .topbar-brand { display:flex; align-items:center; gap:8px; }
 .topbar-logo-img  { width:30px; height:30px; border-radius:9px; object-fit:contain; }
-.topbar-logo-text { font-family:'Syne',sans-serif; font-weight:800; font-size:0.95rem; letter-spacing:-0.02em; color:var(--text); }
+.topbar-logo-text { font-family:'Fraunces',serif; font-weight:800; font-size:0.95rem; letter-spacing:-0.02em; color:var(--text); }
 .topbar-right { display:flex; align-items:center; gap:6px; }
 
-.plan-badge { font-size:0.58rem; font-weight:700; padding:3px 8px; border-radius:20px; letter-spacing:0.08em; font-family:'Inter',sans-serif; }
+.plan-badge { font-size:0.58rem; font-weight:700; padding:3px 8px; border-radius:20px; letter-spacing:0.08em; font-family:'Plus Jakarta Sans',sans-serif; }
 .plan-badge.free { background:rgba(255,255,255,0.04); color:var(--muted); border:1px solid var(--border); }
 .plan-badge.pro  { background:var(--accent); color:#fff; }
 
-.btn-icon { background:var(--surface); border:1px solid var(--border); border-radius:7px; padding:5px 10px; font-size:0.65rem; color:var(--muted); cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.2s; }
+.btn-icon { background:var(--surface); border:1px solid var(--border); border-radius:7px; padding:5px 10px; font-size:0.65rem; color:var(--muted); cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; transition:all 0.2s; }
 .btn-icon:hover { border-color:var(--accent2); color:var(--accent2); }
 
 /* ── PLAN CARDS ─────────────────────────────────────────────────────────────── */
@@ -351,7 +368,7 @@ body {
 }
 .fpc-top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:10px; }
 .fpc-info { flex:1; }
-.fpc-title { font-family:'Syne',sans-serif; font-weight:800; font-size:0.85rem; color:var(--sub); margin-bottom:2px; }
+.fpc-title { font-family:'Fraunces',serif; font-weight:800; font-size:0.85rem; color:var(--sub); margin-bottom:2px; }
 .fpc-count { font-size:0.65rem; color:var(--muted); }
 .fpc-limits { display:flex; flex-direction:column; gap:3px; margin-top:6px; }
 .fpc-limit  { font-size:0.63rem; color:var(--muted); }
@@ -359,7 +376,7 @@ body {
 
 .upgrade-btn {
   border:none; border-radius:10px; padding:10px 13px; cursor:pointer;
-  background:var(--accent); color:#fff; font-family:'Inter',sans-serif;
+  background:var(--accent); color:#fff; font-family:'Plus Jakarta Sans',sans-serif;
   font-size:0.62rem; text-align:center; line-height:1.5; flex-shrink:0;
   transition:opacity 0.2s; white-space:nowrap;
 }
@@ -379,16 +396,16 @@ body {
   display:flex; align-items:center; justify-content:space-between; gap:10px;
 }
 .ppc-info { flex:1; }
-.ppc-title { font-family:'Syne',sans-serif; font-weight:800; font-size:0.88rem; color:var(--accent); margin-bottom:3px; }
+.ppc-title { font-family:'Fraunces',serif; font-weight:800; font-size:0.88rem; color:var(--accent); margin-bottom:3px; }
 .ppc-sub   { font-size:0.63rem; color:var(--sub); margin-bottom:6px; }
 .ppc-perks { display:flex; flex-direction:column; gap:3px; }
 .ppc-perk  { font-size:0.63rem; color:var(--accent3); }
 .ppc-perk::before { content:'✓ '; }
-.pro-badge { font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; color:var(--accent); background:rgba(108,99,255,0.15); border:1px solid rgba(108,99,255,0.3); border-radius:9px; padding:8px 13px; flex-shrink:0; }
+.pro-badge { font-family:'Fraunces',serif; font-weight:800; font-size:1.1rem; color:var(--accent); background:rgba(108,99,255,0.15); border:1px solid rgba(108,99,255,0.3); border-radius:9px; padding:8px 13px; flex-shrink:0; }
 
 /* ── TABS ───────────────────────────────────────────────────────────────────── */
 .tabs-nav { display:flex; width:100%; background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:3px; gap:3px; margin-bottom:8px; }
-.tab-btn  { flex:1; padding:8px 4px; border:none; border-radius:9px; font-family:'Inter',sans-serif; font-size:0.7rem; font-weight:600; cursor:pointer; background:transparent; color:var(--muted); transition:all 0.2s; }
+.tab-btn  { flex:1; padding:8px 4px; border:none; border-radius:9px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.7rem; font-weight:600; cursor:pointer; background:transparent; color:var(--muted); transition:all 0.2s; }
 .tab-btn.active { background:var(--surface); color:var(--accent); }
 
 .tab-panel { display:none; width:100%; }
@@ -403,7 +420,7 @@ body {
 .note-hero.active { border-color:var(--accent); }
 .note-hero.active::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%, rgba(108,99,255,0.08) 0%, transparent 65%); pointer-events:none; }
 
-.note-name { font-family:'Syne',sans-serif; font-size:clamp(2.6rem,14vw,3.8rem); font-weight:800; letter-spacing:-0.04em; line-height:1; text-align:center; color:var(--accent); transition:color 0.4s; min-height:1em; }
+.note-name { font-family:'Fraunces',serif; font-size:clamp(1.8rem,9vw,2.6rem); font-weight:800; letter-spacing:-0.04em; line-height:1; text-align:center; color:var(--accent); transition:color 0.4s; min-height:1em; }
 .note-name.dim { color:var(--border2); }
 
 .note-meta { text-align:center; font-size:0.74rem; color:var(--sub); margin-top:4px; min-height:1.2em; }
@@ -435,18 +452,18 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 .info-card { background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:11px 12px; }
 .info-card.accent-border { border-color:var(--accent); }
 .info-label { font-size:0.55rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; font-weight:600; }
-.info-value { font-family:'Syne',sans-serif; font-size:1.05rem; font-weight:700; color:var(--text); line-height:1.1; }
+.info-value { font-family:'Fraunces',serif; font-size:1.05rem; font-weight:700; color:var(--text); line-height:1.1; }
 .info-card.accent-border .info-value { color:var(--accent); }
 .info-sub   { font-size:0.58rem; color:var(--muted); margin-top:2px; }
 
 .history-card { width:100%; background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:10px 12px; margin-bottom:8px; }
 .history-row  { display:flex; gap:5px; flex-wrap:wrap; min-height:24px; align-items:center; margin-top:7px; }
-.note-chip    { background:var(--surface); border-radius:5px; padding:3px 8px; font-size:0.65rem; font-family:'Syne',sans-serif; font-weight:700; color:var(--muted); animation:chipIn 0.12s ease-out; }
+.note-chip    { background:var(--surface); border-radius:5px; padding:3px 8px; font-size:0.65rem; font-family:'Fraunces',serif; font-weight:700; color:var(--muted); animation:chipIn 0.12s ease-out; }
 .note-chip.latest { background:rgba(108,99,255,0.15); color:var(--accent); border:1px solid rgba(108,99,255,0.3); }
 @keyframes chipIn { from{transform:scale(0.75);opacity:0} to{transform:scale(1);opacity:1} }
 
 /* ── BUTTONS ────────────────────────────────────────────────────────────────── */
-.mic-btn { display:block; width:100%; max-width:220px; margin:4px auto 5px; padding:13px; border:none; border-radius:50px; font-family:'Inter',sans-serif; font-size:0.8rem; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; letter-spacing:0.04em; transition:opacity 0.2s, transform 0.15s; }
+.mic-btn { display:block; width:100%; max-width:220px; margin:4px auto 5px; padding:13px; border:none; border-radius:50px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.8rem; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; letter-spacing:0.04em; transition:opacity 0.2s, transform 0.15s; }
 .mic-btn:hover { opacity:0.88; transform:translateY(-1px); }
 .mic-btn.stop  { background:var(--accent2); }
 
@@ -454,8 +471,15 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 .pulse-dot.on { background:#fff; animation:pulse 1.2s infinite; }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
 
-.ghost-btn { display:block; margin:0 auto 6px; background:transparent; border:1px solid var(--border); border-radius:50px; padding:6px 18px; color:var(--muted); font-family:'Inter',sans-serif; font-size:0.65rem; cursor:pointer; transition:all 0.2s; }
+.ghost-btn { display:block; margin:0 auto 6px; background:transparent; border:1px solid var(--border); border-radius:50px; padding:6px 18px; color:var(--muted); font-family:'Plus Jakarta Sans',sans-serif; font-size:0.65rem; cursor:pointer; transition:all 0.2s; }
 .ghost-btn:hover { border-color:var(--accent2); color:var(--accent2); }
+
+.theme-toggle-btn {
+  background:var(--surface); border:1px solid var(--border); border-radius:7px;
+  padding:5px 8px; font-size:0.82rem; color:var(--muted); cursor:pointer;
+  transition:all 0.2s; line-height:1;
+}
+.theme-toggle-btn:hover { border-color:var(--accent); }
 
 /* ── SUGESTÃO HARMÔNICA (detector tab) ─────────────────────────────────────── */
 .harmonic-suggest-card {
@@ -464,12 +488,12 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 }
 .hs-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
 .hs-title  { font-size:0.58rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); font-weight:600; }
-.hs-key    { font-family:'Syne',sans-serif; font-size:0.78rem; font-weight:800; color:var(--accent); }
+.hs-key    { font-family:'Fraunces',serif; font-size:0.78rem; font-weight:700; color:var(--accent); }
 .hs-chords { display:flex; gap:5px; flex-wrap:wrap; }
 .hs-chord  {
   background:var(--surface); border:1px solid var(--border);
   border-radius:7px; padding:5px 9px;
-  font-family:'Syne',sans-serif; font-size:0.75rem; font-weight:700;
+  font-family:'Fraunces',serif; font-size:0.75rem; font-weight:700;
   color:var(--sub); display:flex; flex-direction:column; align-items:center; gap:1px;
   min-width:36px; text-align:center;
 }
@@ -481,23 +505,23 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 .hs-chord.dominant .hs-chord-name { color:var(--gold); }
 .hs-empty  { font-size:0.68rem; color:var(--muted); font-style:italic; }
 .hs-lock   { font-size:0.65rem; color:var(--muted); display:flex; align-items:center; gap:5px; }
-.hs-lock-btn { font-size:0.6rem; padding:3px 8px; border:none; border-radius:20px; cursor:pointer; background:var(--accent); color:#fff; font-family:'Inter',sans-serif; font-weight:600; }
+.hs-lock-btn { font-size:0.6rem; padding:3px 8px; border:none; border-radius:20px; cursor:pointer; background:var(--accent); color:#fff; font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; }
 
 
 .harmonic-card { width:100%; background:var(--card); border:1px solid var(--border); border-radius:18px; padding:16px; margin-bottom:8px; position:relative; overflow:hidden; }
 
 .chord-selector { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:14px; }
-.chord-root-btn { padding:6px 10px; border:1px solid var(--border); border-radius:7px; font-family:'Syne',sans-serif; font-size:0.72rem; font-weight:700; cursor:pointer; background:var(--surface); color:var(--sub); transition:all 0.15s; }
+.chord-root-btn { padding:6px 10px; border:1px solid var(--border); border-radius:7px; font-family:'Fraunces',serif; font-size:0.72rem; font-weight:700; cursor:pointer; background:var(--surface); color:var(--sub); transition:all 0.15s; }
 .chord-root-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
 
 .chord-type-row { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
-.chord-type-btn { padding:6px 14px; border:1px solid var(--border); border-radius:7px; font-family:'Inter',sans-serif; font-size:0.7rem; font-weight:600; cursor:pointer; background:var(--surface); color:var(--sub); transition:all 0.15s; }
+.chord-type-btn { padding:6px 14px; border:1px solid var(--border); border-radius:7px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.7rem; font-weight:600; cursor:pointer; background:var(--surface); color:var(--sub); transition:all 0.15s; }
 .chord-type-btn.active { border-color:var(--accent); color:var(--accent); }
 
 .harmonic-field { display:flex; flex-direction:column; gap:6px; }
 .degree-row     { display:flex; align-items:center; gap:8px; background:var(--surface); border-radius:9px; padding:10px 12px; border:1px solid var(--border); }
-.degree-num     { font-family:'Syne',sans-serif; font-size:0.65rem; font-weight:800; color:var(--muted); width:20px; flex-shrink:0; }
-.degree-chord   { font-family:'Syne',sans-serif; font-size:1rem; font-weight:800; color:var(--text); flex:1; }
+.degree-num     { font-family:'Fraunces',serif; font-size:0.65rem; font-weight:800; color:var(--muted); width:20px; flex-shrink:0; }
+.degree-chord   { font-family:'Fraunces',serif; font-size:1rem; font-weight:700; color:var(--text); flex:1; }
 .degree-function{ font-size:0.58rem; color:var(--muted); font-weight:500; }
 .degree-quality { font-size:0.56rem; padding:2px 7px; border-radius:20px; font-weight:700; letter-spacing:0.06em; }
 .dq-major { background:rgba(108,99,255,0.15); color:var(--accent); border:1px solid rgba(108,99,255,0.2); }
@@ -506,16 +530,16 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 
 .pro-lock { position:absolute; inset:0; border-radius:18px; background:rgba(10,10,18,0.88); backdrop-filter:blur(5px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; z-index:10; padding:20px; text-align:center; }
 .lock-icon  { font-size:2rem; }
-.lock-title { font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; color:var(--text); }
+.lock-title { font-family:'Fraunces',serif; font-weight:800; font-size:1rem; color:var(--text); }
 .lock-sub   { font-size:0.7rem; color:var(--sub); line-height:1.6; max-width:210px; }
-.lock-btn   { margin-top:4px; padding:10px 24px; border:none; border-radius:50px; font-family:'Inter',sans-serif; font-size:0.78rem; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; transition:opacity 0.2s; }
+.lock-btn   { margin-top:4px; padding:10px 24px; border:none; border-radius:50px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; transition:opacity 0.2s; }
 .lock-btn:hover { opacity:0.85; }
 
 /* ── PAYWALL ────────────────────────────────────────────────────────────────── */
 #paywallOverlay { display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:16px; }
 .paywall-card   { background:var(--card); border:1px solid var(--border); border-radius:22px; padding:24px 20px; width:100%; max-width:330px; text-align:center; box-shadow:0 24px 80px rgba(0,0,0,0.6); }
 .paywall-icon   { font-size:2rem; margin-bottom:8px; }
-.paywall-title  { font-family:'Syne',sans-serif; font-weight:800; font-size:1.2rem; color:var(--text); margin-bottom:6px; }
+.paywall-title  { font-family:'Fraunces',serif; font-weight:800; font-size:1.2rem; color:var(--text); margin-bottom:6px; }
 .paywall-sub    { font-size:0.72rem; color:var(--sub); line-height:1.6; margin-bottom:16px; }
 
 .paywall-features { text-align:left; margin-bottom:16px; display:flex; flex-direction:column; gap:9px; }
@@ -523,10 +547,10 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 .feat-icon { width:26px; height:26px; background:rgba(108,99,255,0.15); border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:0.76rem; flex-shrink:0; border:1px solid rgba(108,99,255,0.2); }
 
 .paywall-price        { margin-bottom:12px; }
-.paywall-price strong { display:block; font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:800; color:var(--text); }
+.paywall-price strong { display:block; font-family:'Fraunces',serif; font-size:1.5rem; font-weight:800; color:var(--text); }
 .paywall-price span   { font-size:0.68rem; color:var(--muted); }
 
-#btnCheckout { width:100%; padding:13px; border:none; border-radius:50px; font-family:'Inter',sans-serif; font-size:0.82rem; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; margin-bottom:10px; transition:opacity 0.2s; }
+#btnCheckout { width:100%; padding:13px; border:none; border-radius:50px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.82rem; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; margin-bottom:10px; transition:opacity 0.2s; }
 #btnCheckout:hover    { opacity:0.85; }
 #btnCheckout:disabled { opacity:0.5; }
 .paywall-dismiss { font-size:0.68rem; color:var(--muted); cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
@@ -535,11 +559,11 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 .pix-code-box   { background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:9px 11px; margin-bottom:12px; }
 .pix-code-label { font-size:0.56rem; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px; font-weight:600; }
 #pixCode   { font-size:0.58rem; color:var(--sub); word-break:break-all; line-height:1.5; max-height:52px; overflow:hidden; }
-.copy-btn  { width:100%; padding:11px; border:none; border-radius:50px; font-family:'Inter',sans-serif; font-size:0.78rem; font-weight:700; cursor:pointer; background:var(--accent3); color:#fff; margin-bottom:10px; }
+.copy-btn  { width:100%; padding:11px; border:none; border-radius:50px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:700; cursor:pointer; background:var(--accent3); color:#fff; margin-bottom:10px; }
 #pixStatus { font-size:0.7rem; color:var(--muted); margin-bottom:10px; }
 
 /* ── TOAST ──────────────────────────────────────────────────────────────────── */
-#toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(60px); background:var(--card); border:1px solid var(--border); color:var(--text); padding:9px 18px; border-radius:50px; font-size:0.75rem; white-space:nowrap; z-index:300; transition:transform 0.3s; pointer-events:none; font-weight:500; box-shadow:0 8px 28px rgba(0,0,0,0.5); }
+#toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(60px); background:var(--card); border:1px solid var(--border); color:var(--text); padding:9px 18px; border-radius:50px; font-size:0.75rem; white-space:nowrap; z-index:300; transition:transform 0.3s; pointer-events:none; font-weight:500; box-shadow:0 8px 28px rgba(0,0,0,0.5); font-family:'Plus Jakarta Sans',sans-serif; }
 #toast.show { transform:translateX(-50%) translateY(0); }
 
 /* ── PRO MODAL ──────────────────────────────────────────────────────────────── */
@@ -555,31 +579,32 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 .pm-handle { width:36px; height:4px; background:var(--border2); border-radius:2px; margin:0 auto 20px; }
 .pm-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
 .pm-icon { width:44px; height:44px; background:rgba(108,99,255,0.15); border:1px solid rgba(108,99,255,0.3); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; }
-.pm-title { font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; color:var(--accent); }
+.pm-title { font-family:'Fraunces',serif; font-weight:800; font-size:1.1rem; color:var(--accent); }
 .pm-sub   { font-size:0.65rem; color:var(--sub); margin-top:2px; }
 .pm-perks { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
 .pm-perk  { display:flex; align-items:center; gap:12px; background:var(--surface); border-radius:10px; padding:11px 13px; border:1px solid var(--border); }
 .pm-perk-icon { font-size:1.1rem; width:28px; text-align:center; flex-shrink:0; }
 .pm-perk-text strong { display:block; font-size:0.8rem; color:var(--text); font-weight:600; }
 .pm-perk-text span   { font-size:0.65rem; color:var(--sub); }
-.pm-close { width:100%; padding:12px; border:1px solid var(--border); border-radius:50px; background:transparent; color:var(--muted); font-family:'Inter',sans-serif; font-size:0.78rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.pm-close { width:100%; padding:12px; border:1px solid var(--border); border-radius:50px; background:transparent; color:var(--muted); font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
 .pm-close:hover { border-color:var(--accent); color:var(--accent); }
 
 /* ── NOTAS TAB ──────────────────────────────────────────────────────────────── */
 .notes-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; width:100%; margin-bottom:12px; }
 .note-play-btn {
   background:var(--card); border:1px solid var(--border); border-radius:12px;
-  padding:14px 6px; cursor:pointer; font-family:'Syne',sans-serif;
-  font-size:0.88rem; font-weight:800; color:var(--sub);
+  padding:14px 6px; cursor:pointer; font-family:'Fraunces',serif;
+  font-size:0.88rem; font-weight:700; color:var(--sub);
   display:flex; flex-direction:column; align-items:center; gap:4px;
   transition:all 0.15s; -webkit-tap-highlight-color:transparent;
+  user-select:none; -webkit-user-select:none; touch-action:none;
 }
 .note-play-btn:active, .note-play-btn.playing { background:rgba(108,99,255,0.18); border-color:var(--accent); color:var(--accent); transform:scale(0.94); }
 .note-play-btn .npb-name { font-size:1.05rem; color:var(--text); }
-.note-play-btn .npb-pt   { font-size:0.52rem; color:var(--muted); letter-spacing:0.04em; }
-.note-play-btn .npb-hz   { font-size:0.5rem;  color:var(--muted); }
+.note-play-btn .npb-pt   { font-size:0.52rem; color:var(--muted); letter-spacing:0.04em; font-family:'Plus Jakarta Sans',sans-serif; }
+.note-play-btn .npb-hz   { font-size:0.5rem;  color:var(--muted); font-family:'Plus Jakarta Sans',sans-serif; }
 .octave-row { display:flex; gap:6px; width:100%; margin-bottom:10px; align-items:center; }
-.octave-btn { padding:5px 12px; border:1px solid var(--border); border-radius:20px; background:var(--surface); color:var(--muted); font-family:'Inter',sans-serif; font-size:0.65rem; font-weight:600; cursor:pointer; transition:all 0.15s; }
+.octave-btn { padding:5px 12px; border:1px solid var(--border); border-radius:20px; background:var(--surface); color:var(--muted); font-family:'Plus Jakarta Sans',sans-serif; font-size:0.65rem; font-weight:600; cursor:pointer; transition:all 0.15s; }
 .octave-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(108,99,255,0.1); }
 .notes-tab-label { font-size:0.58rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); font-weight:600; width:100%; margin-bottom:6px; }
 
@@ -588,14 +613,14 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 .chord-tip-overlay.open { display:flex; }
 .chord-tip-card { background:var(--card); border:1px solid var(--border); border-radius:22px 22px 0 0; padding:22px 20px 36px; width:100%; max-width:440px; animation:slideUp 0.28s cubic-bezier(0.34,1.2,0.64,1); }
 .ct-handle { width:36px; height:4px; background:var(--border2); border-radius:2px; margin:0 auto 18px; }
-.ct-chord-name { font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; color:var(--accent); text-align:center; margin-bottom:2px; }
+.ct-chord-name { font-family:'Fraunces',serif; font-weight:800; font-size:1.6rem; color:var(--accent); text-align:center; margin-bottom:2px; }
 .ct-chord-sub  { font-size:0.68rem; color:var(--sub); text-align:center; margin-bottom:18px; }
 .ct-tips { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
 .ct-tip  { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:11px 13px; display:flex; gap:10px; align-items:flex-start; }
 .ct-tip-icon { font-size:1rem; flex-shrink:0; margin-top:1px; }
-.ct-tip-text strong { display:block; font-size:0.77rem; color:var(--text); font-weight:600; margin-bottom:2px; }
+.ct-tip-text strong { display:block; font-size:0.77rem; color:var(--text); font-weight:600; margin-bottom:2px; font-family:'Plus Jakarta Sans',sans-serif; }
 .ct-tip-text span   { font-size:0.65rem; color:var(--sub); line-height:1.5; }
-.ct-close { width:100%; padding:12px; border:1px solid var(--border); border-radius:50px; background:transparent; color:var(--muted); font-family:'Inter',sans-serif; font-size:0.78rem; font-weight:600; cursor:pointer; }
+.ct-close { width:100%; padding:12px; border:1px solid var(--border); border-radius:50px; background:transparent; color:var(--muted); font-family:'Plus Jakarta Sans',sans-serif; font-size:0.78rem; font-weight:600; cursor:pointer; }
 .degree-row { cursor:pointer; transition:background 0.15s; }
 .degree-row:hover { background:rgba(108,99,255,0.07); }
 </style>
@@ -645,6 +670,7 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
       <span class="topbar-logo-text">Detector de Tom</span>
     </div>
     <div class="topbar-right">
+      <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Alternar tema">🌙</button>
       <span class="plan-badge free" id="planBadge">FREE</span>
       <button class="btn-icon" onclick="doLogout()">Sair</button>
     </div>
@@ -678,7 +704,7 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
   <div id="planProCard" style="display:none;width:100%;margin-bottom:8px">
     <div onclick="openProModal()" style="display:flex;align-items:center;gap:8px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.3);border-radius:50px;padding:7px 14px 7px 10px;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background='rgba(108,99,255,0.18)'" onmouseout="this.style.background='rgba(108,99,255,0.1)'">
       <span style="font-size:0.75rem;">⚡</span>
-      <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:0.78rem;color:var(--accent);">Plano Pro</span>
+      <span style="font-family:'Fraunces',serif;font-weight:800;font-size:0.78rem;color:var(--accent);">Plano Pro</span>
       <span style="font-size:0.65rem;color:var(--sub);flex:1">· Acesso vitalício</span>
       <span style="font-size:0.6rem;font-weight:700;color:var(--accent);background:rgba(108,99,255,0.15);border:1px solid rgba(108,99,255,0.25);border-radius:20px;padding:2px 8px;">ATIVO ›</span>
     </div>
@@ -957,14 +983,14 @@ function detectKey(hist){
 // ── PITCH ─────────────────────────────────────────────────────────────────────
 function autoCorrelate(buf,sr){
   const S=buf.length,M=Math.floor(S/2);let rms=0;
-  for(let i=0;i<S;i++)rms+=buf[i]*buf[i];rms=Math.sqrt(rms/S);if(rms<0.002)return -1;
+  for(let i=0;i<S;i++)rms+=buf[i]*buf[i];rms=Math.sqrt(rms/S);if(rms<0.001)return -1;
   let bo=-1,bc=0,lc=1,fg=false,c=0;
   for(let o=0;o<M;o++){
     c=0;for(let i=0;i<M;i++)c+=buf[i]*buf[i+o];c/=M;
-    if(fg&&c<lc){if(bc>0.8){let sh=0;if(o>2){const d0=c-lc,nx=o+1<M?(()=>{let x=0;for(let i=0;i<M;i++)x+=buf[i]*buf[i+o+1];return x/M;})():c,d1=c-nx;sh=d1/(d0+d1)*0.5;}return sr/(bo+sh);}fg=false;}
-    if(!fg&&c>0.8)fg=true;if(c>bc){bc=c;bo=o;}lc=c;
+    if(fg&&c<lc){if(bc>0.75){let sh=0;if(o>2){const d0=c-lc,nx=o+1<M?(()=>{let x=0;for(let i=0;i<M;i++)x+=buf[i]*buf[i+o+1];return x/M;})():c,d1=c-nx;sh=d1/(d0+d1)*0.5;}return sr/(bo+sh);}fg=false;}
+    if(!fg&&c>0.75)fg=true;if(c>bc){bc=c;bo=o;}lc=c;
   }
-  if(bc>0.005)return sr/bo;return -1;
+  if(bc>0.003)return sr/bo;return -1;
 }
 function freqToNote(f){
   if(f<=0)return null;const n=12*(Math.log2(f/440))+69,r=Math.round(n),c=(n-r)*100,i=((r%12)+12)%12;
@@ -1078,7 +1104,8 @@ function renderNoteHistory(){
 
 function drawWaveform(da){
   const w=canvas.width,h=canvas.height;
-  wCtx.clearRect(0,0,w,h);wCtx.fillStyle='#1a1a28';wCtx.fillRect(0,0,w,h);
+  const bg=_isDark?'#1a1a28':'#ffffff';
+  wCtx.clearRect(0,0,w,h);wCtx.fillStyle=bg;wCtx.fillRect(0,0,w,h);
   wCtx.lineWidth=1.5;wCtx.strokeStyle=running?'rgba(108,99,255,0.8)':'rgba(38,38,56,0.8)';
   wCtx.beginPath();const sw=w/da.length;let x=0;
   for(let i=0;i<da.length;i++){const v=da[i]/128,y=v*h/2;i===0?wCtx.moveTo(x,y):wCtx.lineTo(x,y);x+=sw;}
@@ -1090,7 +1117,7 @@ function audioLoop(){
   const td=new Float32Array(analyser.fftSize),bt=new Uint8Array(analyser.fftSize);
   analyser.getFloatTimeDomainData(td);analyser.getByteTimeDomainData(bt);drawWaveform(bt);
   const f=autoCorrelate(td,audioCtx.sampleRate);
-  if(f>60&&f<1200){const ni=freqToNote(f);if(ni){updateNoteDisplay(ni,f);addNoteToHistory(ni.name+ni.octave,ni.index);}}
+  if(f>60&&f<1500){const ni=freqToNote(f);if(ni){updateNoteDisplay(ni,f);addNoteToHistory(ni.name+ni.octave,ni.index);}}
   else updateNoteDisplay(null);
 }
 
@@ -1101,8 +1128,8 @@ async function startMic(){
   try{
     micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
     audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-    analyser=audioCtx.createAnalyser();analyser.fftSize=2048;analyser.smoothingTimeConstant=0.5;
-    const gain=audioCtx.createGain();gain.gain.value=4.0;
+    analyser=audioCtx.createAnalyser();analyser.fftSize=4096;analyser.smoothingTimeConstant=0.6;
+    const gain=audioCtx.createGain();gain.gain.value=6.0;
     source=audioCtx.createMediaStreamSource(micStream);source.connect(gain);gain.connect(analyser);
     running=true;
     document.getElementById('startBtn').innerHTML='<span class="pulse-dot on"></span>Parar';
@@ -1116,8 +1143,9 @@ function stopMic(){
   if(micStream)micStream.getTracks().forEach(t=>t.stop());if(audioCtx)audioCtx.close();
   document.getElementById('startBtn').innerHTML='<span class="pulse-dot"></span>Iniciar Microfone';
   document.getElementById('startBtn').classList.remove('stop');updateNoteDisplay(null);
-  const w=canvas.width,h=canvas.height;wCtx.clearRect(0,0,w,h);
-  wCtx.fillStyle='#1a1a28';wCtx.fillRect(0,0,w,h);
+  const w=canvas.width,h=canvas.height,bg=_isDark?'#1a1a28':'#ffffff';
+  wCtx.clearRect(0,0,w,h);
+  wCtx.fillStyle=bg;wCtx.fillRect(0,0,w,h);
   wCtx.strokeStyle='rgba(38,38,56,0.8)';wCtx.lineWidth=1.5;
   wCtx.beginPath();wCtx.moveTo(0,h/2);wCtx.lineTo(w,h/2);wCtx.stroke();
 }
@@ -1127,6 +1155,20 @@ function clearHistory(){
   ['keyMajor','keyMinor'].forEach(id=>document.getElementById(id).textContent='—');
   document.getElementById('keyMajorSub').textContent='cante mais notas';
   document.getElementById('keyMinorSub').textContent='—';
+}
+
+// ── THEME TOGGLE ──────────────────────────────────────────────────────────────
+let _isDark = true;
+function toggleTheme() {
+  _isDark = !_isDark;
+  document.documentElement.classList.toggle('light', !_isDark);
+  document.getElementById('themeToggleBtn').textContent = _isDark ? '🌙' : '☀️';
+  // update waveform bg color
+  const bg = _isDark ? '#1a1a28' : '#ffffff';
+  if (canvas) {
+    const w=canvas.width,h=canvas.height;
+    wCtx.fillStyle=bg;wCtx.fillRect(0,0,w,h);
+  }
 }
 
 // ── PRO MODAL ─────────────────────────────────────────────────────────────────
@@ -1229,7 +1271,7 @@ function buildFreqTable() {
   refs.forEach(r => {
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:var(--surface);border-radius:7px;';
-    row.innerHTML = `<span style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;color:var(--text)">${r.n}</span><span style="font-size:0.65rem;color:var(--muted)">${r.f} Hz · Oitava 4</span>`;
+    row.innerHTML = `<span style="font-family:'Fraunces',serif;font-weight:700;font-size:0.8rem;color:var(--text)">${r.n}</span><span style="font-size:0.65rem;color:var(--muted);font-family:'Plus Jakarta Sans',sans-serif">${r.f} Hz · Oitava 4</span>`;
     el.appendChild(row);
   });
 }
@@ -1240,49 +1282,56 @@ const CHORD_TIPS = {
     tips: [
       { icon: '🏠', title: 'Acorde de repouso', text: 'É o "lar" da tonalidade. Você está nele — sinta a estabilidade e resolução.' },
       { icon: '🎵', title: 'Boa nota para começar e terminar', text: 'Frases musicais costumam iniciar ou finalizar aqui. É o ponto de maior tensão resolvida.' },
-      { icon: '💡', title: 'Para sair daqui', text: 'O IV (Subdominante) cria movimento natural, enquanto o V (Dominante) cria tensão que pede retorno.' }
+      { icon: '🎸', title: 'Passagens clássicas no violão', text: 'Do I, vá para o IV para criar movimento (I→IV), ou para o V para criar tensão (I→V→I). A progressão I→VI→IV→V é a base de centenas de músicas populares.' },
+      { icon: '💡', title: 'Dica prática', text: 'Experimente: I → V → VI → IV (ex: C → G → Am → F). É a progressão mais usada no pop moderno.' }
     ]
   },
   1: { // II
     tips: [
       { icon: '➡️', title: 'Preparação do V', text: 'O II grau é o "pré-dominante" clássico. Aparece naturalmente antes do V na cadência II–V–I.' },
-      { icon: '🎸', title: 'Toque suave', text: 'Em escalas maiores é menor (IIm), o que dá um caráter melancólico antes da tensão do dominante.' },
-      { icon: '💡', title: 'Dica prática', text: 'Se você está no II, o próximo acorde mais natural é o V. Pense nisso ao criar a progressão.' }
+      { icon: '🎸', title: 'Passagens no violão', text: 'Do II, a passagem mais natural é para o V (tensão) ou diretamente para o I (resolução surpreendente). Tente: I → II → V → I para uma progressão jazz clássica.' },
+      { icon: '🔄', title: 'Substituto do IV', text: 'O IIm tem função parecida com o IV. Troque um pelo outro para variar sem sair da tonalidade.' },
+      { icon: '💡', title: 'Dica prática', text: 'No violão: use o IIm como ponte entre o I e o V. Ex em Dó: C → Dm → G → C.' }
     ]
   },
   2: { // III
     tips: [
       { icon: '🌉', title: 'Ponte entre I e IV', text: 'O III tem notas em comum com o I (tônica). Funciona bem como substituto ou passagem entre graus.' },
       { icon: '🎭', title: 'Cor e tensão leve', text: 'Cria um som levemente tenso mas elegante. Muito usado em progressões pop e jazz.' },
-      { icon: '💡', title: 'Dica prática', text: 'Tente a progressão I–III–IV–V. É clássica e soa muito bem.' }
+      { icon: '🎸', title: 'Passagens no violão', text: 'O III aparece muito em descidas cromáticas: I → VII → VI → V. Também funciona como III → VI → II → V (ciclo de quintas).' },
+      { icon: '💡', title: 'Dica prática', text: 'Tente: I → III → IV → V. É clássica e soa muito bem. Ex em Lá: A → C#m → D → E.' }
     ]
   },
   3: { // IV
     tips: [
       { icon: '🌊', title: 'Movimento natural', text: 'O IV (Subdominante) é o acorde que mais se afasta da tônica sem criar tensão excessiva.' },
       { icon: '🎵', title: 'Muito usado no pop e gospel', text: 'A cadência I–IV–V–I é a base de incontáveis músicas. O IV cria o "levantamento" antes da resolução.' },
-      { icon: '💡', title: 'Dica prática', text: 'Ao chegar no IV, você pode ir para o V (tensão) ou voltar ao I (repouso) — ambos soam naturais.' }
+      { icon: '🎸', title: 'Passagens no violão', text: 'Do IV, você pode ir para o V (tensão e resolução clássica) ou voltar ao I (cadência plagal — o "Amém" do gospel). IV → I é suave e conclusivo.' },
+      { icon: '💡', title: 'Dica prática', text: 'Progressão blues: I → IV → I → V → IV → I. Ex em Mi: E → A → E → B → A → E.' }
     ]
   },
   4: { // V - Dominante
     tips: [
       { icon: '⚡', title: 'Máxima tensão', text: 'O V (Dominante) é o grau com mais tensão da tonalidade. Ele "pede" resolução para o I.' },
       { icon: '🎯', title: 'Cadência perfeita', text: 'V → I é chamado de cadência autêntica perfeita — a resolução mais satisfatória em música tonal.' },
-      { icon: '💡', title: 'Dica prática', text: 'Para aumentar a tensão antes do I, adicione a 7ª ao V (V7). A nota sensível puxa forte para a tônica.' }
+      { icon: '🎸', title: 'Passagens no violão', text: 'Do V, sempre resolva no I para satisfação total. Para aumentar tensão ainda mais: use V7 (sétima da dominante). Ex em Sol: D7 → G. A nota Fá dentro do D7 cria um puxão irresistível.' },
+      { icon: '💡', title: 'Dica prática', text: 'Experimente a enganosa: V → VI em vez de V → I. A "cadência enganosa" surpreende o ouvido. Ex: G → Am em vez de G → C.' }
     ]
   },
   5: { // VI
     tips: [
       { icon: '😢', title: 'Tom emotivo e relativo menor', text: 'O VI é o relativo menor da tonalidade maior. Traz um sentimento mais melancólico e introspectivo.' },
       { icon: '🔄', title: 'Substituto da tônica', text: 'O VI tem 2 notas em comum com o I, por isso pode substituí-lo em muitos contextos.' },
-      { icon: '💡', title: 'Dica prática', text: 'A progressão I–V–VI–IV é a mais usada no pop moderno. O VI é o "coração emocional" dela.' }
+      { icon: '🎸', title: 'Passagens no violão', text: 'O VI é âncora da progressão I–V–VI–IV. Do VI, vá ao IV (movimento suave) ou ao II (preparando o V). Ciclo pop: I → V → VI → IV funciona em qualquer tonalidade.' },
+      { icon: '💡', title: 'Dica prática', text: 'Em Dó: C → G → Am → F. Em Sol: G → D → Em → C. Em Ré: D → A → Bm → G. Mesma fórmula, tons diferentes.' }
     ]
   },
   6: { // VII - Sensível
     tips: [
       { icon: '😬', title: 'Máxima instabilidade', text: 'O VII° (diminuto) é o acorde mais instável da tonalidade. Contém a tríade que mais pede resolução.' },
-      { icon: '🎭', title: 'Função dominante', text: 'Funciona como um V sem a fundamental. Cria tensão similar ao V, com sonoridade mais densa.' },
-      { icon: '💡', title: 'Dica prática', text: 'Raramente usado como destino — é quase sempre passagem. Tente VII°→I para uma resolução dramática.' }
+      { icon: '🎭', title: 'Função dominante', text: 'Funciona como um V sem a fundamental. Cria tensão similar ao V, com sonoridade mais densa e dramática.' },
+      { icon: '🎸', title: 'Passagens no violão', text: 'Do VII°, resolva sempre no I para efeito dramático. Use como passagem cromática: I → VII° → VIm (descida elegante). Raro como destino, mas poderoso como passagem.' },
+      { icon: '💡', title: 'Dica prática', text: 'Tente VII°→I para uma resolução dramática. Ex em Dó: Bdim → C. O tension-release é intenso e cinematográfico.' }
     ]
   }
 };

@@ -10,6 +10,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCPTM3tzXX8jqEoDr3NUAJ4TkVQhJXskyI",
@@ -39,15 +40,18 @@
   });
 
   async function loadUserData(uid) {
-    const ref  = doc(db, "users", uid);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) {
-      await setDoc(ref, { plan: "free", detectionCount: 0, createdAt: new Date() });
-      window._vp.isPro = false;
-    } else {
-      window._vp.isPro = snap.data().plan === "pro";
+      const ref  = doc(db, "users", uid);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) {
+        await setDoc(ref, { plan: "free", detectionCount: 0, createdAt: new Date() });
+        window._vp.isPro = false;
+        window._vp.detectionCount = 0;
+      } else {
+        const data = snap.data();
+        window._vp.isPro = data.plan === "pro";
+        window._vp.detectionCount = data.detectionCount || 0;
+      }
     }
-  }
 
   function showWelcome(email) {
     const name = email.split('@')[0];
@@ -127,13 +131,28 @@
     return map[code] || 'Erro ao autenticar.';
   }
 
-  window.incrementDetection = () => {
-    if (window._vp.isPro) return true;
-    window._vp.detectionCount++;
-    updateFreeBar();
-    if (window._vp.detectionCount >= window._vp.FREE_LIMIT) { stopMic(); showPaywall(); return false; }
-    return true;
-  };
+  let _saveTimer = null;
+    window.incrementDetection = () => {
+      if (window._vp.isPro) return true;
+      window._vp.detectionCount++;
+      updateFreeBar();
+    
+      // Salva no Firestore com debounce de 3s para não sobrecarregar
+      if (_saveTimer) clearTimeout(_saveTimer);
+      _saveTimer = setTimeout(async () => {
+        try {
+          const ref = doc(db, "users", window._vp.user.uid);
+          await updateDoc(ref, { detectionCount: window._vp.detectionCount });
+        } catch(e) {}
+      }, 3000);
+    
+      if (window._vp.detectionCount >= window._vp.FREE_LIMIT) {
+        stopMic();
+        showPaywall();
+        return false;
+      }
+      return true;
+    };
 
   function updateFreeBar() {
     if (window._vp.isPro) { document.getElementById('freeBarWrap').style.display = 'none'; return; }

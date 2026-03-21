@@ -541,6 +541,63 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 /* ── TOAST ──────────────────────────────────────────────────────────────────── */
 #toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(60px); background:var(--card); border:1px solid var(--border); color:var(--text); padding:9px 18px; border-radius:50px; font-size:0.75rem; white-space:nowrap; z-index:300; transition:transform 0.3s; pointer-events:none; font-weight:500; box-shadow:0 8px 28px rgba(0,0,0,0.5); }
 #toast.show { transform:translateX(-50%) translateY(0); }
+
+/* ── PRO MODAL ──────────────────────────────────────────────────────────────── */
+#proModal { display:none; position:fixed; inset:0; z-index:150; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px); align-items:flex-end; justify-content:center; padding:0; }
+#proModal.open { display:flex; }
+.pro-modal-card {
+  background:var(--card); border:1px solid rgba(108,99,255,0.3);
+  border-radius:22px 22px 0 0; padding:24px 20px 36px;
+  width:100%; max-width:440px;
+  animation: slideUp 0.28s cubic-bezier(0.34,1.2,0.64,1);
+}
+@keyframes slideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+.pm-handle { width:36px; height:4px; background:var(--border2); border-radius:2px; margin:0 auto 20px; }
+.pm-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+.pm-icon { width:44px; height:44px; background:rgba(108,99,255,0.15); border:1px solid rgba(108,99,255,0.3); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; }
+.pm-title { font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; color:var(--accent); }
+.pm-sub   { font-size:0.65rem; color:var(--sub); margin-top:2px; }
+.pm-perks { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+.pm-perk  { display:flex; align-items:center; gap:12px; background:var(--surface); border-radius:10px; padding:11px 13px; border:1px solid var(--border); }
+.pm-perk-icon { font-size:1.1rem; width:28px; text-align:center; flex-shrink:0; }
+.pm-perk-text strong { display:block; font-size:0.8rem; color:var(--text); font-weight:600; }
+.pm-perk-text span   { font-size:0.65rem; color:var(--sub); }
+.pm-close { width:100%; padding:12px; border:1px solid var(--border); border-radius:50px; background:transparent; color:var(--muted); font-family:'Inter',sans-serif; font-size:0.78rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.pm-close:hover { border-color:var(--accent); color:var(--accent); }
+
+/* ── NOTAS TAB ──────────────────────────────────────────────────────────────── */
+.notes-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; width:100%; margin-bottom:12px; }
+.note-play-btn {
+  background:var(--card); border:1px solid var(--border); border-radius:12px;
+  padding:14px 6px; cursor:pointer; font-family:'Syne',sans-serif;
+  font-size:0.88rem; font-weight:800; color:var(--sub);
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  transition:all 0.15s; -webkit-tap-highlight-color:transparent;
+}
+.note-play-btn:active, .note-play-btn.playing { background:rgba(108,99,255,0.18); border-color:var(--accent); color:var(--accent); transform:scale(0.94); }
+.note-play-btn .npb-name { font-size:1.05rem; color:var(--text); }
+.note-play-btn .npb-pt   { font-size:0.52rem; color:var(--muted); letter-spacing:0.04em; }
+.note-play-btn .npb-hz   { font-size:0.5rem;  color:var(--muted); }
+.octave-row { display:flex; gap:6px; width:100%; margin-bottom:10px; align-items:center; }
+.octave-btn { padding:5px 12px; border:1px solid var(--border); border-radius:20px; background:var(--surface); color:var(--muted); font-family:'Inter',sans-serif; font-size:0.65rem; font-weight:600; cursor:pointer; transition:all 0.15s; }
+.octave-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(108,99,255,0.1); }
+.notes-tab-label { font-size:0.58rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); font-weight:600; width:100%; margin-bottom:6px; }
+
+/* ── CHORD TIPS ─────────────────────────────────────────────────────────────── */
+.chord-tip-overlay { display:none; position:fixed; inset:0; z-index:150; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px); align-items:flex-end; justify-content:center; }
+.chord-tip-overlay.open { display:flex; }
+.chord-tip-card { background:var(--card); border:1px solid var(--border); border-radius:22px 22px 0 0; padding:22px 20px 36px; width:100%; max-width:440px; animation:slideUp 0.28s cubic-bezier(0.34,1.2,0.64,1); }
+.ct-handle { width:36px; height:4px; background:var(--border2); border-radius:2px; margin:0 auto 18px; }
+.ct-chord-name { font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; color:var(--accent); text-align:center; margin-bottom:2px; }
+.ct-chord-sub  { font-size:0.68rem; color:var(--sub); text-align:center; margin-bottom:18px; }
+.ct-tips { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+.ct-tip  { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:11px 13px; display:flex; gap:10px; align-items:flex-start; }
+.ct-tip-icon { font-size:1rem; flex-shrink:0; margin-top:1px; }
+.ct-tip-text strong { display:block; font-size:0.77rem; color:var(--text); font-weight:600; margin-bottom:2px; }
+.ct-tip-text span   { font-size:0.65rem; color:var(--sub); line-height:1.5; }
+.ct-close { width:100%; padding:12px; border:1px solid var(--border); border-radius:50px; background:transparent; color:var(--muted); font-family:'Inter',sans-serif; font-size:0.78rem; font-weight:600; cursor:pointer; }
+.degree-row { cursor:pointer; transition:background 0.15s; }
+.degree-row:hover { background:rgba(108,99,255,0.07); }
 </style>
 </head>
 <body>
@@ -619,18 +676,19 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 
   <!-- PLANO PRO -->
   <div id="planProCard" style="display:none;width:100%;margin-bottom:8px">
-    <div style="display:flex;align-items:center;gap:8px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.3);border-radius:50px;padding:7px 14px 7px 10px;">
+    <div onclick="openProModal()" style="display:flex;align-items:center;gap:8px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.3);border-radius:50px;padding:7px 14px 7px 10px;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background='rgba(108,99,255,0.18)'" onmouseout="this.style.background='rgba(108,99,255,0.1)'">
       <span style="font-size:0.75rem;">⚡</span>
       <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:0.78rem;color:var(--accent);">Plano Pro</span>
       <span style="font-size:0.65rem;color:var(--sub);flex:1">· Acesso vitalício</span>
-      <span style="font-size:0.6rem;font-weight:700;color:var(--accent);background:rgba(108,99,255,0.15);border:1px solid rgba(108,99,255,0.25);border-radius:20px;padding:2px 8px;">ATIVO</span>
+      <span style="font-size:0.6rem;font-weight:700;color:var(--accent);background:rgba(108,99,255,0.15);border:1px solid rgba(108,99,255,0.25);border-radius:20px;padding:2px 8px;">ATIVO ›</span>
     </div>
   </div>
 
   <!-- TABS -->
   <div class="tabs-nav">
     <button class="tab-btn active" onclick="switchTab2('detector')">🎵 Detector</button>
-    <button class="tab-btn"        onclick="switchTab2('harmonico')">🎼 Campo Harmônico</button>
+    <button class="tab-btn"        onclick="switchTab2('harmonico')">🎼 Harmônico</button>
+    <button class="tab-btn"        onclick="switchTab2('notas')">🎹 Notas</button>
   </div>
 
   <!-- TAB DETECTOR -->
@@ -711,9 +769,72 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
       <div class="chord-selector" id="chordRoots"></div>
       <div class="card-label" style="margin-bottom:7px">Escala</div>
       <div class="chord-type-row" id="chordTypes"></div>
-      <div class="card-label" style="margin-bottom:7px">Campo Harmônico</div>
+      <div class="card-label" style="margin-bottom:7px">Campo Harmônico <span style="font-size:0.55rem;color:var(--muted);font-weight:400;letter-spacing:0">· toque para dicas</span></div>
       <div class="harmonic-field" id="harmonicField"></div>
     </div>
+  </div>
+
+  <!-- TAB NOTAS -->
+  <div class="tab-panel" id="tab-notas">
+    <div style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 12px;margin-bottom:8px;">
+      <div class="notes-tab-label">Oitava</div>
+      <div class="octave-row" id="octaveRow"></div>
+      <div class="notes-tab-label" style="margin-top:10px">Toque para ouvir</div>
+      <div class="notes-grid" id="notesGrid"></div>
+      <div style="font-size:0.6rem;color:var(--muted);text-align:center;margin-top:4px;">Pressione e solte para tocar · mantendo pressionado sustenta a nota</div>
+    </div>
+    <div style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 12px;margin-bottom:8px;">
+      <div class="notes-tab-label">Frequências de referência</div>
+      <div id="freqTable" style="display:flex;flex-direction:column;gap:5px;margin-top:6px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PRO MODAL -->
+<div id="proModal" onclick="if(event.target===this)closeProModal()">
+  <div class="pro-modal-card">
+    <div class="pm-handle"></div>
+    <div class="pm-header">
+      <div class="pm-icon">⚡</div>
+      <div>
+        <div class="pm-title">Plano Pro Ativo</div>
+        <div class="pm-sub">Acesso vitalício desbloqueado · pague uma vez</div>
+      </div>
+    </div>
+    <div class="pm-perks">
+      <div class="pm-perk">
+        <div class="pm-perk-icon">∞</div>
+        <div class="pm-perk-text"><strong>Detecções ilimitadas</strong><span>Sem limite de notas detectadas — use à vontade</span></div>
+      </div>
+      <div class="pm-perk">
+        <div class="pm-perk-icon">🎼</div>
+        <div class="pm-perk-text"><strong>Campo Harmônico completo</strong><span>Veja todos os 7 graus, funções e qualidades de qualquer tom</span></div>
+      </div>
+      <div class="pm-perk">
+        <div class="pm-perk-icon">🎵</div>
+        <div class="pm-perk-text"><strong>Acordes do tom em tempo real</strong><span>Sugestão automática de acordes enquanto você canta</span></div>
+      </div>
+      <div class="pm-perk">
+        <div class="pm-perk-icon">💡</div>
+        <div class="pm-perk-text"><strong>Dicas de preparação de acordes</strong><span>Toque em qualquer grau para ver como se preparar para ele</span></div>
+      </div>
+      <div class="pm-perk">
+        <div class="pm-perk-icon">🎹</div>
+        <div class="pm-perk-text"><strong>Aba de notas com áudio</strong><span>Ouça qualquer nota em tempo real para treinar o ouvido</span></div>
+      </div>
+    </div>
+    <button class="pm-close" onclick="closeProModal()">Fechar</button>
+  </div>
+</div>
+
+<!-- CHORD TIP MODAL -->
+<div id="chordTipModal" class="chord-tip-overlay" onclick="if(event.target===this)closeChordTip()">
+  <div class="chord-tip-card">
+    <div class="ct-handle"></div>
+    <div class="ct-chord-name" id="ctChordName">—</div>
+    <div class="ct-chord-sub"  id="ctChordSub">—</div>
+    <div class="ct-tips" id="ctTips"></div>
+    <button class="ct-close" onclick="closeChordTip()">Fechar</button>
   </div>
 </div>
 
@@ -765,12 +886,15 @@ function switchTab(tab) {
 }
 
 function switchTab2(tab) {
+  const tabs = ['detector','harmonico','notas'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>{
-    b.className='tab-btn'+((['detector','harmonico'][i]===tab)?' active':'');
+    b.className='tab-btn'+(tabs[i]===tab?' active':'');
   });
-  document.getElementById('tab-detector').className ='tab-panel'+(tab==='detector'?' active':'');
-  document.getElementById('tab-harmonico').className='tab-panel'+(tab==='harmonico'?' active':'');
+  tabs.forEach(t => {
+    document.getElementById('tab-'+t).className='tab-panel'+(t===tab?' active':'');
+  });
   if(tab==='harmonico') renderHarmonicField();
+  if(tab==='notas') renderNotesTab();
 }
 
 // ── MUSIC THEORY ──────────────────────────────────────────────────────────────
@@ -815,6 +939,7 @@ function renderHarmonicField(){
     const cn=NOTE_NAMES[ri]+(q==='Menor'?'m':q==='Dim'?'°':'');
     const row=document.createElement('div'); row.className='degree-row';
     row.innerHTML=`<span class="degree-num">${DEGREES[i]}</span><span class="degree-chord">${cn}</span><span class="degree-function">${FUNCS[i]}</span><span class="degree-quality ${qc}">${q}</span>`;
+    row.onclick=()=>showChordTip(cn, DEGREES[i], FUNCS[i], q, i, selType);
     field.appendChild(row);
   });
 }
@@ -1003,6 +1128,182 @@ function clearHistory(){
   document.getElementById('keyMajorSub').textContent='cante mais notas';
   document.getElementById('keyMinorSub').textContent='—';
 }
+
+// ── PRO MODAL ─────────────────────────────────────────────────────────────────
+window.openProModal  = () => document.getElementById('proModal').classList.add('open');
+window.closeProModal = () => document.getElementById('proModal').classList.remove('open');
+
+// ── NOTAS TAB ─────────────────────────────────────────────────────────────────
+let selOctave = 4;
+let _noteAudioCtx = null;
+let _noteOscNode  = null;
+let _noteGainNode = null;
+
+function getNoteAudioCtx() {
+  if (!_noteAudioCtx || _noteAudioCtx.state === 'closed') {
+    _noteAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return _noteAudioCtx;
+}
+
+function playNoteFreq(freq) {
+  const ctx = getNoteAudioCtx();
+  if (ctx.state === 'suspended') ctx.resume();
+  stopNoteFreq();
+  _noteGainNode = ctx.createGain();
+  _noteGainNode.gain.setValueAtTime(0, ctx.currentTime);
+  _noteGainNode.gain.linearRampToValueAtTime(0.38, ctx.currentTime + 0.01);
+  _noteGainNode.connect(ctx.destination);
+  _noteOscNode = ctx.createOscillator();
+  _noteOscNode.type = 'triangle';
+  _noteOscNode.frequency.value = freq;
+  _noteOscNode.connect(_noteGainNode);
+  _noteOscNode.start();
+}
+
+function stopNoteFreq() {
+  if (_noteOscNode) {
+    try {
+      const ctx = getNoteAudioCtx();
+      _noteGainNode.gain.setValueAtTime(_noteGainNode.gain.value, ctx.currentTime);
+      _noteGainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.07);
+      setTimeout(() => { try { _noteOscNode.stop(); } catch(e){} }, 80);
+    } catch(e) {}
+    _noteOscNode = null;
+  }
+}
+
+function noteFreq(noteIdx, octave) {
+  // noteIdx: 0=C, 1=C#, ..., 11=B
+  const midiNote = (octave + 1) * 12 + noteIdx;
+  return 440 * Math.pow(2, (midiNote - 69) / 12);
+}
+
+let _notesTabBuilt = false;
+function renderNotesTab() {
+  if (_notesTabBuilt) return;
+  _notesTabBuilt = true;
+
+  // Octave selector
+  const octRow = document.getElementById('octaveRow');
+  [2,3,4,5].forEach(o => {
+    const b = document.createElement('button');
+    b.className = 'octave-btn' + (o === selOctave ? ' active' : '');
+    b.textContent = 'Oitava ' + o;
+    b.onclick = () => {
+      selOctave = o;
+      octRow.querySelectorAll('.octave-btn').forEach((btn,i) => {
+        btn.className = 'octave-btn' + ([2,3,4,5][i] === o ? ' active' : '');
+      });
+      rebuildNotesGrid();
+    };
+    octRow.appendChild(b);
+  });
+
+  rebuildNotesGrid();
+  buildFreqTable();
+}
+
+function rebuildNotesGrid() {
+  const grid = document.getElementById('notesGrid');
+  grid.innerHTML = '';
+  NOTE_NAMES.forEach((n, i) => {
+    const freq = noteFreq(i, selOctave);
+    const btn  = document.createElement('button');
+    btn.className = 'note-play-btn';
+    btn.innerHTML = `<span class="npb-name">${n}</span><span class="npb-pt">${NOTE_NAMES_PT[i]}</span><span class="npb-hz">${freq.toFixed(1)} Hz</span>`;
+    btn.addEventListener('pointerdown', e => { e.preventDefault(); playNoteFreq(freq); btn.classList.add('playing'); });
+    btn.addEventListener('pointerup',   () => { stopNoteFreq(); btn.classList.remove('playing'); });
+    btn.addEventListener('pointerleave',() => { stopNoteFreq(); btn.classList.remove('playing'); });
+    grid.appendChild(btn);
+  });
+}
+
+function buildFreqTable() {
+  const el = document.getElementById('freqTable');
+  const refs = [
+    {n:'Dó', f:261.63}, {n:'Ré', f:293.66}, {n:'Mi', f:329.63},
+    {n:'Fá', f:349.23}, {n:'Sol', f:392.00}, {n:'Lá', f:440.00},
+    {n:'Si', f:493.88}
+  ];
+  refs.forEach(r => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:var(--surface);border-radius:7px;';
+    row.innerHTML = `<span style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;color:var(--text)">${r.n}</span><span style="font-size:0.65rem;color:var(--muted)">${r.f} Hz · Oitava 4</span>`;
+    el.appendChild(row);
+  });
+}
+
+// ── CHORD TIPS ────────────────────────────────────────────────────────────────
+const CHORD_TIPS = {
+  0: { // Tônica (I)
+    tips: [
+      { icon: '🏠', title: 'Acorde de repouso', text: 'É o "lar" da tonalidade. Você está nele — sinta a estabilidade e resolução.' },
+      { icon: '🎵', title: 'Boa nota para começar e terminar', text: 'Frases musicais costumam iniciar ou finalizar aqui. É o ponto de maior tensão resolvida.' },
+      { icon: '💡', title: 'Para sair daqui', text: 'O IV (Subdominante) cria movimento natural, enquanto o V (Dominante) cria tensão que pede retorno.' }
+    ]
+  },
+  1: { // II
+    tips: [
+      { icon: '➡️', title: 'Preparação do V', text: 'O II grau é o "pré-dominante" clássico. Aparece naturalmente antes do V na cadência II–V–I.' },
+      { icon: '🎸', title: 'Toque suave', text: 'Em escalas maiores é menor (IIm), o que dá um caráter melancólico antes da tensão do dominante.' },
+      { icon: '💡', title: 'Dica prática', text: 'Se você está no II, o próximo acorde mais natural é o V. Pense nisso ao criar a progressão.' }
+    ]
+  },
+  2: { // III
+    tips: [
+      { icon: '🌉', title: 'Ponte entre I e IV', text: 'O III tem notas em comum com o I (tônica). Funciona bem como substituto ou passagem entre graus.' },
+      { icon: '🎭', title: 'Cor e tensão leve', text: 'Cria um som levemente tenso mas elegante. Muito usado em progressões pop e jazz.' },
+      { icon: '💡', title: 'Dica prática', text: 'Tente a progressão I–III–IV–V. É clássica e soa muito bem.' }
+    ]
+  },
+  3: { // IV
+    tips: [
+      { icon: '🌊', title: 'Movimento natural', text: 'O IV (Subdominante) é o acorde que mais se afasta da tônica sem criar tensão excessiva.' },
+      { icon: '🎵', title: 'Muito usado no pop e gospel', text: 'A cadência I–IV–V–I é a base de incontáveis músicas. O IV cria o "levantamento" antes da resolução.' },
+      { icon: '💡', title: 'Dica prática', text: 'Ao chegar no IV, você pode ir para o V (tensão) ou voltar ao I (repouso) — ambos soam naturais.' }
+    ]
+  },
+  4: { // V - Dominante
+    tips: [
+      { icon: '⚡', title: 'Máxima tensão', text: 'O V (Dominante) é o grau com mais tensão da tonalidade. Ele "pede" resolução para o I.' },
+      { icon: '🎯', title: 'Cadência perfeita', text: 'V → I é chamado de cadência autêntica perfeita — a resolução mais satisfatória em música tonal.' },
+      { icon: '💡', title: 'Dica prática', text: 'Para aumentar a tensão antes do I, adicione a 7ª ao V (V7). A nota sensível puxa forte para a tônica.' }
+    ]
+  },
+  5: { // VI
+    tips: [
+      { icon: '😢', title: 'Tom emotivo e relativo menor', text: 'O VI é o relativo menor da tonalidade maior. Traz um sentimento mais melancólico e introspectivo.' },
+      { icon: '🔄', title: 'Substituto da tônica', text: 'O VI tem 2 notas em comum com o I, por isso pode substituí-lo em muitos contextos.' },
+      { icon: '💡', title: 'Dica prática', text: 'A progressão I–V–VI–IV é a mais usada no pop moderno. O VI é o "coração emocional" dela.' }
+    ]
+  },
+  6: { // VII - Sensível
+    tips: [
+      { icon: '😬', title: 'Máxima instabilidade', text: 'O VII° (diminuto) é o acorde mais instável da tonalidade. Contém a tríade que mais pede resolução.' },
+      { icon: '🎭', title: 'Função dominante', text: 'Funciona como um V sem a fundamental. Cria tensão similar ao V, com sonoridade mais densa.' },
+      { icon: '💡', title: 'Dica prática', text: 'Raramente usado como destino — é quase sempre passagem. Tente VII°→I para uma resolução dramática.' }
+    ]
+  }
+};
+
+window.showChordTip = (chordName, degree, func, quality, degreeIdx, scaleType) => {
+  const modal = document.getElementById('chordTipModal');
+  document.getElementById('ctChordName').textContent = chordName;
+  document.getElementById('ctChordSub').textContent  = `${degree} grau · ${func} · ${quality} · escala ${scaleType}`;
+  const tipsEl = document.getElementById('ctTips');
+  tipsEl.innerHTML = '';
+  const tipData = CHORD_TIPS[degreeIdx] || { tips: [] };
+  tipData.tips.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'ct-tip';
+    div.innerHTML = `<div class="ct-tip-icon">${t.icon}</div><div class="ct-tip-text"><strong>${t.title}</strong><span>${t.text}</span></div>`;
+    tipsEl.appendChild(div);
+  });
+  modal.classList.add('open');
+};
+
+window.closeChordTip = () => document.getElementById('chordTipModal').classList.remove('open');
 </script>
 </body>
 </html>

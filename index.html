@@ -79,6 +79,9 @@
     document.getElementById('welcomeScreen').style.display = 'none';
     updatePlanUI();
     updateFreeBar();
+    // Inicializa o lock dos acordes do tom
+    const lockEl = document.getElementById('hsSuggestLock');
+    if (lockEl) lockEl.style.display = (window._vp && window._vp.isPro) ? 'none' : 'flex';
   }
 
   function updatePlanUI() {
@@ -668,7 +671,13 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
     </div>
 
     <!-- SUGESTÃO DO CAMPO HARMÔNICO — no lugar da forma de onda -->
-    <div class="harmonic-suggest-card">
+    <div class="harmonic-suggest-card" style="position:relative;overflow:hidden">
+      <div class="pro-lock" id="hsSuggestLock" style="border-radius:var(--r);display:none">
+        <div class="lock-icon">🔒</div>
+        <div class="lock-title">Recurso Pro</div>
+        <p class="lock-sub">Veja os acordes do tom em tempo real com o plano Pro.</p>
+        <button class="lock-btn" onclick="showPaywall()">Desbloquear Pro</button>
+      </div>
       <div class="hs-header">
         <span class="hs-title">Acordes do tom</span>
         <span class="hs-key" id="hsSuggestKey">—</span>
@@ -902,6 +911,11 @@ const DEG_S    =['I','II','III','IV','V','VI','VII'];
 function updateHarmonicSuggest(res) {
   const keyEl    = document.getElementById('hsSuggestKey');
   const chordsEl = document.getElementById('hsSuggestChords');
+  const lockEl   = document.getElementById('hsSuggestLock');
+  // Mostra lock para usuários free
+  const isPro = window._vp && window._vp.isPro;
+  if (lockEl) lockEl.style.display = isPro ? 'none' : 'flex';
+  if (!isPro) return;
   if (!res) {
     keyEl.textContent = '—';
     chordsEl.innerHTML = '<span class="hs-empty">cante para ver sugestões</span>';

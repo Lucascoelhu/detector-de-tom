@@ -6,6 +6,7 @@
   ],
   "routes": [
     { "src": "/api/create-preference", "dest": "/api/create-preference.js" },
+    { "src": "/api/check-payment", "dest": "/api/check-payment.js" },
     { "src": "/api/mp-webhook", "dest": "/api/mp-webhook.js" },
     { "src": "/(.*)", "dest": "index.html" }
   ]

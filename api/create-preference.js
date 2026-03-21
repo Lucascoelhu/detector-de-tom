@@ -15,11 +15,11 @@ module.exports = async function handler(req, res) {
     const pref = await preference.create({
       body: {
         items: [{
-          id: 'vocalpitch-pro-monthly',
-          title: 'Detector de Tom Pro — Assinatura Mensal',
+          id: 'vocalpitch-pro-lifetime',
+          title: 'Detector de Tom Pro — Acesso Vitalício',
           quantity: 1,
           currency_id: 'BRL',
-          unit_price: 19.90,
+          unit_price: 29.90,
         }],
         payer: { email },
         external_reference: uid,

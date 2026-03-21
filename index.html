@@ -599,7 +599,7 @@ canvas#waveCanvas { width:100%; height:36px; display:block; border-radius:6px; }
 
 <!-- ─── AUTH ─────────────────────────────────────────────────────────────── -->
 <div id="authScreen">
-  <div class="auth-logo">Detector / Afinador<span>.</span></div>
+  <div class="auth-logo">Detector<span>.</span></div>
   <p class="auth-tagline">Notas e tom em tempo real</p>
   <div class="auth-card">
     <div class="auth-tabs">
@@ -624,7 +624,7 @@ canvas#waveCanvas { width:100%; height:36px; display:block; border-radius:6px; }
 <!-- ─── APP ──────────────────────────────────────────────────────────────── -->
 <div id="appScreen">
   <div class="topbar">
-    <span class="topbar-logo">Detector<span>.</span></span>
+    <span class="topbar-logo">Detector / Afinador<span>.</span></span>
     <div class="topbar-right">
       <span class="plan-badge free" id="planBadge">FREE</span>
       <button class="btn-icon" onclick="doLogout()">Sair</button>
@@ -883,7 +883,6 @@ function updateNoteDisplay(noteInfo, freq) {
 }
 
 function updateKeyDisplay() {
-  if (window._vp) { if (!window.incrementDetection()) return; }
   const result = detectKey(noteHistory);
   const keyMajor    = document.getElementById('keyMajor');
   const keyMajorSub = document.getElementById('keyMajorSub');
@@ -897,16 +896,20 @@ function updateKeyDisplay() {
   const pct = Math.min(99, Math.round(result.score*100/(result.scale.includes('Pent')?(5/7):1)));
   keyMajor.textContent    = `${NOTE_NAMES[r]} ${result.scale}`;
   keyMajorSub.textContent = `${NOTE_NAMES_PT[r]} · ${pct}% fit`;
-  if (result.scale==='Maior')        { const rel=(r+9)%12; keyMinor.textContent=`${NOTE_NAMES[rel]}m`; keyMinorSub.textContent=`${NOTE_NAMES_PT[rel]} menor`; }
-  else if (result.scale==='Menor')   { const rel=(r+3)%12; keyMinor.textContent=`${NOTE_NAMES[rel]}`; keyMinorSub.textContent=`${NOTE_NAMES_PT[rel]} maior`; }
+  if (result.scale==='Maior')            { const rel=(r+9)%12; keyMinor.textContent=`${NOTE_NAMES[rel]}m`; keyMinorSub.textContent=`${NOTE_NAMES_PT[rel]} menor`; }
+  else if (result.scale==='Menor')       { const rel=(r+3)%12; keyMinor.textContent=`${NOTE_NAMES[rel]}`; keyMinorSub.textContent=`${NOTE_NAMES_PT[rel]} maior`; }
   else if (result.scale==='Pent. Maior') { const rel=(r+9)%12; keyMinor.textContent=`${NOTE_NAMES[rel]} P.m`; keyMinorSub.textContent=`pent. menor rel.`; }
-  else { const rel=(r+3)%12; keyMinor.textContent=`${NOTE_NAMES[rel]} P.M`; keyMinorSub.textContent=`pent. maior rel.`; }
+  else                                   { const rel=(r+3)%12; keyMinor.textContent=`${NOTE_NAMES[rel]} P.M`; keyMinorSub.textContent=`pent. maior rel.`; }
 }
 
 function addNoteToHistory(noteName, noteIndex) {
   const now=Date.now();
   if (noteName===lastNoteName && now-lastNoteTime<400) return;
   lastNoteName=noteName; lastNoteTime=now;
+
+  // Conta detecção aqui — separado da atualização do tom
+  if (window._vp) { if (!window.incrementDetection()) return; }
+
   noteHistory.push(noteIndex);
   if (noteHistory.length>80) noteHistory.shift();
   noteDisplayHistory.unshift(noteName);

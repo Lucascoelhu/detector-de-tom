@@ -16,7 +16,7 @@ module.exports = async function handler(req, res) {
       body: {
         items: [{
           id: 'vocalpitch-pro-monthly',
-          title: 'VocalPitch Pro — Assinatura Mensal',
+          title: 'Detector de Tom Pro — Assinatura Mensal',
           quantity: 1,
           currency_id: 'BRL',
           unit_price: 19.90,

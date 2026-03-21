@@ -2,12 +2,14 @@
   "version": 2,
   "builds": [
     { "src": "index.html", "use": "@vercel/static" },
+    { "src": "LogoC.png", "use": "@vercel/static" },
     { "src": "api/*.js", "use": "@vercel/node" }
   ],
   "routes": [
     { "src": "/api/create-preference", "dest": "/api/create-preference.js" },
     { "src": "/api/check-payment", "dest": "/api/check-payment.js" },
     { "src": "/api/mp-webhook", "dest": "/api/mp-webhook.js" },
+    { "src": "/LogoC.png", "dest": "/LogoC.png" },
     { "src": "/(.*)", "dest": "index.html" }
   ]
 }

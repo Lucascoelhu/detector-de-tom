@@ -238,10 +238,11 @@ function startPolling(paymentId) {
         window._vp.isPro = true;
         updatePlanBadge();
         hidePaywall();
-        // Resetar telas para próxima vez
         document.getElementById('pixOffer').style.display = 'block';
         document.getElementById('pixQR').style.display = 'none';
+        document.getElementById('freeBarWrap').style.display = 'none';
         showToast('🎉 Pagamento confirmado! Bem-vindo ao Pro!');
+      }
       } else {
         document.getElementById('pixStatus').textContent =
           data.status === 'pending' ? '⏳ Aguardando pagamento...' : `Status: ${data.status}`;

@@ -1,6 +1,6 @@
 const { MercadoPagoConfig, Preference } = require('mercadopago');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const { uid, email } = req.body;
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     });
     res.json({ init_point: pref.init_point });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Falha ao criar pagamento' });
+    console.error('Erro MP:', err);
+    res.status(500).json({ error: 'Falha ao criar pagamento', detail: err.message });
   }
 }

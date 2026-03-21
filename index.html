@@ -24,7 +24,7 @@
   const auth = getAuth(app);
   const db   = getFirestore(app);
 
-  window._vp = { auth, db, user: null, isPro: false, detectionCount: 0, FREE_LIMIT: 600 };
+  window._vp = { auth, db, user: null, isPro: false, detectionCount: 0, FREE_LIMIT: 1000 };
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {

@@ -37,6 +37,6 @@ module.exports = async function handler(req, res) {
     res.json({ approved: false, status: result.status });
   } catch (err) {
     console.error('Erro check payment:', err);
-    res.status(500).json({ error: 'Falha ao verificar pagamento' });
+    res.status(500).json({ error: 'Falha ao verificar pagamento', detail: err.message, stack: err.stack });
   }
 }

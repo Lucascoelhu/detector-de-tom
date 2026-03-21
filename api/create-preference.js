@@ -1,4 +1,4 @@
-const { MercadoPagoConfig, Preference } = require('mercadopago');
+const { MercadoPagoConfig, Payment } = require('mercadopago');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -11,30 +11,28 @@ module.exports = async function handler(req, res) {
   });
 
   try {
-    const preference = new Preference(mpClient);
-    const pref = await preference.create({
+    const payment = new Payment(mpClient);
+    const result = await payment.create({
       body: {
-        items: [{
-          id: 'vocalpitch-pro-lifetime',
-          title: 'Detector de Tom Pro — Acesso Vitalício',
-          quantity: 1,
-          currency_id: 'BRL',
-          unit_price: 29.90,
-        }],
-        payer: { email },
+        transaction_amount: 29.90,
+        description: 'Detector de Tom Pro — Acesso Vitalício',
+        payment_method_id: 'pix',
         external_reference: uid,
-        back_urls: {
-          success: `${process.env.FRONTEND_URL}?payment_status=approved`,
-          failure: `${process.env.FRONTEND_URL}?payment_status=failed`,
-          pending: `${process.env.FRONTEND_URL}?payment_status=pending`,
+        payer: {
+          email,
+          first_name: 'Usuario',
+          last_name: 'VocalPitch',
         },
-        auto_return: 'approved',
-        notification_url: `${process.env.FRONTEND_URL}/api/mp-webhook`,
       }
     });
-    res.json({ init_point: pref.init_point });
+
+    res.json({
+      payment_id: result.id,
+      qr_code: result.point_of_interaction.transaction_data.qr_code,
+      qr_code_base64: result.point_of_interaction.transaction_data.qr_code_base64,
+    });
   } catch (err) {
     console.error('Erro MP:', err);
-    res.status(500).json({ error: 'Falha ao criar pagamento', detail: err.message });
+    res.status(500).json({ error: 'Falha ao gerar Pix', detail: err.message });
   }
 }

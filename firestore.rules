@@ -1,0 +1,27 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Firestore Security Rules — VocalPitch
+// Cole em: Firebase Console → Firestore Database → Regras
+// ─────────────────────────────────────────────────────────────────────────────
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Cada usuário só lê/escreve o próprio documento
+    match /users/{uid} {
+      // Leitura: apenas o próprio usuário autenticado
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      // Criação: usuário autenticado cria apenas com plan=free
+      allow create: if request.auth != null
+                    && request.auth.uid == uid
+                    && request.resource.data.plan == 'free';
+
+      // Atualização: usuário NÃO pode alterar o campo "plan" diretamente
+      // (apenas o backend via Admin SDK pode promover para pro)
+      allow update: if request.auth != null
+                    && request.auth.uid == uid
+                    && !('plan' in request.resource.data.diff(resource.data).affectedKeys());
+    }
+  }
+}

@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VocalPitch — Detector de Notas</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Unbounded:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    signOut, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import {
+    getFirestore, doc, getDoc, setDoc, updateDoc, increment
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  // ─── CONFIGURAÇÃO FIREBASE ────────────────────────────────────────────────
+  // ⚠️ Substitua pelos dados do seu projeto Firebase:
+  // https://console.firebase.google.com → Configurações do projeto → Seus apps
+  const firebaseConfig = {
+    apiKey:            "SUA_API_KEY",
+    authDomain:        "SEU_PROJETO.firebaseapp.com",
+    projectId:         "SEU_PROJETO",
+    storageBucket:     "SEU_PROJETO.appspot.com",
+    messagingSenderId: "SEU_SENDER_ID",
+    appId:             "SEU_APP_ID"
+  };
+
+  const app   = initializeApp(firebaseConfig);
+  const auth  = getAuth(app);
+  const db    = getFirestore(app);
+
+  // ─── ESTADO GLOBAL ────────────────────────────────────────────────────────
+  window._vp = {
+    auth, db,
+    user: null,
+    isPro: false,
+    detectionCount: 0,       // conta detecções de tom na sessão
+    FREE_LIMIT: 20,
+  };
+
+  // ─── AUTH STATE ───────────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      window._vp.user = user;
+      await loadUserData(user.uid);
+      showApp();
+    } else {
+      window._vp.user = null;
+      window._vp.isPro = false;
+      showAuth();
+    }
+  });
+
+  async function loadUserData(uid) {
+    const ref = doc(db, "users", uid);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      await setDoc(ref, { plan: "free", detectionCount: 0, createdAt: new Date() });
+      window._vp.isPro = false;
+    } else {
+      const data = snap.data();
+      window._vp.isPro = data.plan === "pro";
+    }
+    updatePlanBadge();
+  }
+
+  function updatePlanBadge() {
+    const badge = document.getElementById('planBadge');
+    if (!badge) return;
+    if (window._vp.isPro) {
+      badge.textContent = 'PRO';
+      badge.className = 'plan-badge pro';
+    } else {
+      badge.textContent = 'FREE';
+      badge.className = 'plan-badge free';
+    }
+  }
+
+  function showAuth() {
+    document.getElementById('authScreen').style.display = 'flex';
+    document.getElementById('appScreen').style.display  = 'none';
+  }
+
+  function showApp() {
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('appScreen').style.display  = 'flex';
+    const emailEl = document.getElementById('userEmail');
+    if (emailEl && window._vp.user) emailEl.textContent = window._vp.user.email;
+    updatePlanBadge();
+    updateFreeBar();
+  }
+
+  // ─── AUTH HANDLERS ────────────────────────────────────────────────────────
+  window.doRegister = async () => {
+    const email = document.getElementById('authEmail').value.trim();
+    const pass  = document.getElementById('authPass').value;
+    const err   = document.getElementById('authError');
+    err.textContent = '';
+    if (!email || !pass) { err.textContent = 'Preencha email e senha.'; return; }
+    try {
+      setAuthLoading(true);
+      await createUserWithEmailAndPassword(auth, email, pass);
+    } catch(e) {
+      err.textContent = translateAuthError(e.code);
+    } finally { setAuthLoading(false); }
+  };
+
+  window.doLogin = async () => {
+    const email = document.getElementById('authEmail').value.trim();
+    const pass  = document.getElementById('authPass').value;
+    const err   = document.getElementById('authError');
+    err.textContent = '';
+    if (!email || !pass) { err.textContent = 'Preencha email e senha.'; return; }
+    try {
+      setAuthLoading(true);
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch(e) {
+      err.textContent = translateAuthError(e.code);
+    } finally { setAuthLoading(false); }
+  };
+
+  window.doLogout = async () => {
+    stopMic();
+    await signOut(auth);
+  };
+
+  function setAuthLoading(v) {
+    document.getElementById('btnLogin').disabled    = v;
+    document.getElementById('btnRegister').disabled = v;
+  }
+
+  function translateAuthError(code) {
+    const map = {
+      'auth/email-already-in-use':   'Este email já está cadastrado.',
+      'auth/invalid-email':           'Email inválido.',
+      'auth/weak-password':           'Senha muito fraca (mínimo 6 caracteres).',
+      'auth/user-not-found':          'Usuário não encontrado.',
+      'auth/wrong-password':          'Senha incorreta.',
+      'auth/invalid-credential':      'Email ou senha incorretos.',
+      'auth/too-many-requests':       'Muitas tentativas. Tente mais tarde.',
+    };
+    return map[code] || 'Erro ao autenticar. Tente novamente.';
+  }
+
+  // ─── FREE LIMIT ───────────────────────────────────────────────────────────
+  window.incrementDetection = () => {
+    if (window._vp.isPro) return true;
+    window._vp.detectionCount++;
+    updateFreeBar();
+    if (window._vp.detectionCount >= window._vp.FREE_LIMIT) {
+      stopMic();
+      showPaywall();
+      return false;
+    }
+    return true;
+  };
+
+  function updateFreeBar() {
+    if (window._vp.isPro) {
+      document.getElementById('freeBarWrap').style.display = 'none';
+      return;
+    }
+    const used = window._vp.detectionCount;
+    const max  = window._vp.FREE_LIMIT;
+    const pct  = Math.min(100, (used / max) * 100);
+    document.getElementById('freeBarFill').style.width = pct + '%';
+    document.getElementById('freeBarLabel').textContent = `${used}/${max} detecções gratuitas`;
+    if (pct >= 80) document.getElementById('freeBarFill').style.background = '#ff3e80';
+  }
+
+  // ─── PAYWALL ─────────────────────────────────────────────────────────────
+  window.showPaywall = () => {
+    document.getElementById('paywallOverlay').style.display = 'flex';
+  };
+  window.hidePaywall = () => {
+    document.getElementById('paywallOverlay').style.display = 'none';
+  };
+
+  // ─── MERCADO PAGO ─────────────────────────────────────────────────────────
+  // ⚠️ Substitua pela URL do seu backend (Cloud Function ou servidor Node):
+  const BACKEND_URL = "https://SEU-BACKEND.com";
+
+  window.startCheckout = async () => {
+    if (!window._vp.user) return;
+    const btn = document.getElementById('btnCheckout');
+    btn.textContent = 'Aguarde...';
+    btn.disabled = true;
+    try {
+      const res  = await fetch(`${BACKEND_URL}/create-preference`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: window._vp.user.uid, email: window._vp.user.email })
+      });
+      const data = await res.json();
+      if (data.init_point) {
+        window.location.href = data.init_point; // redireciona para MP
+      } else {
+        alert('Erro ao iniciar pagamento. Tente novamente.');
+      }
+    } catch(e) {
+      alert('Erro de conexão com o servidor de pagamentos.');
+    } finally {
+      btn.textContent = 'Assinar Pro — R$19,90/mês';
+      btn.disabled = false;
+    }
+  };
+
+  // Verificar retorno do MP (success/failure na URL)
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('payment_status') === 'approved' && window._vp.user) {
+    (async () => {
+      const ref = doc(db, "users", window._vp.user.uid);
+      await updateDoc(ref, { plan: 'pro' });
+      window._vp.isPro = true;
+      updatePlanBadge();
+      hidePaywall();
+      history.replaceState({}, '', '/');
+      showToast('🎉 Bem-vindo ao VocalPitch Pro!');
+    })();
+  }
+
+  window.showToast = (msg) => {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  };
+</script>
+
+<style>
+/* ─── VARIABLES ─────────────────────────────────────────────────────────── */
+:root {
+  --bg:      #f4f5f7;
+  --panel:   #ffffff;
+  --border:  #dde1ea;
+  --accent:  #0077ff;
+  --accent2: #ff3e80;
+  --accent3: #7c3aed;
+  --text:    #1a1a2e;
+  --muted:   #8890a4;
+  --glow:    0 0 24px rgba(0,119,255,0.18);
+  --radius:  16px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Mono', monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 12px 24px;
+}
+
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image: radial-gradient(circle, rgba(0,119,255,0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events:none; z-index:0;
+}
+
+/* ─── AUTH SCREEN ────────────────────────────────────────────────────────── */
+#authScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 380px;
+  position: relative;
+  z-index: 1;
+}
+
+.auth-logo {
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 900;
+  font-size: 1.6rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 4px;
+}
+
+.auth-tagline {
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+
+.auth-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px 24px;
+  width: 100%;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: transparent;
+  color: var(--muted);
+  transition: all 0.2s;
+}
+.auth-tab.active {
+  background: var(--panel);
+  color: var(--accent);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.auth-field {
+  margin-bottom: 12px;
+}
+.auth-field label {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.auth-field input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.82rem;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.auth-field input:focus { border-color: var(--accent); }
+
+.auth-error {
+  font-size: 0.7rem;
+  color: var(--accent2);
+  min-height: 1.2em;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 50px;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(0,119,255,0.25);
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(0,119,255,0.35); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0;
+  color: var(--muted);
+  font-size: 0.65rem;
+}
+.auth-divider::before, .auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ─── APP SCREEN ─────────────────────────────────────────────────────────── */
+#appScreen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  z-index: 1;
+}
+
+/* TOPBAR */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 0 6px;
+}
+
+.topbar-logo {
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 900;
+  font-size: 1rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-badge {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.08em;
+}
+.plan-badge.free {
+  background: rgba(136,144,164,0.12);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.plan-badge.pro {
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(0,119,255,0.25);
+}
+
+.btn-icon {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 0.65rem;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-icon:hover { border-color: var(--accent2); color: var(--accent2); }
+
+/* FREE BAR */
+#freeBarWrap {
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.free-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+#freeBarLabel {
+  font-size: 0.62rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+
+.btn-upgrade-small {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  color: #fff;
+  letter-spacing: 0.05em;
+}
+
+.free-bar-track {
+  height: 5px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+#freeBarFill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.3s, background 0.3s;
+}
+
+/* NOTE DISPLAY */
+.note-display {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px 16px 14px;
+  margin: 0 0 8px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.note-display.active { border-color: var(--accent); box-shadow: var(--glow); }
+
+.note-display::after {
+  content:'';
+  position:absolute; inset:0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(0,119,255,0.05) 0%, transparent 70%);
+  pointer-events:none;
+}
+
+.big-note {
+  font-family: 'Unbounded', sans-serif;
+  font-size: clamp(3.5rem, 18vw, 5.5rem);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: 0 2px 24px rgba(0,119,255,0.25);
+  transition: all 0.08s;
+  min-height: 1em;
+}
+.big-note.silent { color: var(--border); text-shadow: none; }
+
+.freq-label { font-size: 0.72rem; color: var(--muted); margin-top: 4px; letter-spacing: 0.05em; }
+.freq-value { color: var(--accent); font-weight: 700; }
+
+.cents-container { margin: 8px auto 0; width: 100%; max-width: 280px; }
+
+.cents-label {
+  display: flex; justify-content: space-between;
+  font-size: 0.65rem; color: var(--muted);
+  margin-bottom: 4px; letter-spacing: 0.08em;
+}
+
+.cents-track {
+  height: 8px; background: var(--border);
+  border-radius: 4px; position: relative; overflow: visible;
+}
+.cents-track::before {
+  content:''; position:absolute;
+  left:50%; top:-3px; bottom:-3px; width:2px;
+  background:var(--muted); transform:translateX(-50%); border-radius:1px;
+}
+
+.cents-needle {
+  position:absolute; top:50%;
+  width:14px; height:14px; border-radius:50%;
+  background:var(--accent);
+  transform:translate(-50%,-50%); left:50%;
+  transition: left 0.1s, background 0.2s;
+  box-shadow: 0 0 8px rgba(0,119,255,0.4);
+}
+.cents-needle.sharp   { background:var(--accent2); box-shadow:0 0 8px rgba(255,62,128,0.4); }
+.cents-needle.flat    { background:var(--accent3); box-shadow:0 0 8px rgba(124,58,237,0.4); }
+.cents-needle.in-tune { background:#00c96e; box-shadow:0 0 12px rgba(0,201,110,0.5); }
+
+.cents-text { text-align:center; font-size:0.7rem; margin-top:6px; color:var(--muted); min-height:1em; }
+
+.confidence-bar { height:3px; background:var(--border); border-radius:2px; margin-top:10px; overflow:hidden; }
+.confidence-fill {
+  height:100%; border-radius:2px; transition:width 0.1s;
+  background: linear-gradient(90deg, var(--accent3), var(--accent));
+  width:0%;
+}
+
+/* KEY + HISTORY + WAVEFORM */
+.section-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  width: 100%;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.section-title {
+  font-size: 0.58rem; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.key-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.key-card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 12px; padding: 10px 12px; transition: all 0.3s;
+}
+.key-card.top { border-color: var(--accent3); box-shadow: 0 0 16px rgba(124,58,237,0.12); }
+.key-card-label { font-size: 0.55rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.key-card-value { font-family: 'Unbounded', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--text); }
+.key-card.top .key-card-value { color: var(--accent3); }
+.key-card-sub { font-size: 0.6rem; color: var(--muted); margin-top: 3px; }
+
+.notes-history { display:flex; gap:5px; flex-wrap:wrap; min-height:28px; align-items:center; }
+.note-tag {
+  background:var(--border); border-radius:6px; padding:3px 8px;
+  font-size:0.65rem; font-family:'Unbounded',sans-serif; font-weight:700;
+  color:var(--muted); animation:pop 0.15s ease-out;
+}
+.note-tag:first-child {
+  background:rgba(0,119,255,0.12); color:var(--accent);
+  border:1px solid rgba(0,119,255,0.25);
+}
+
+canvas#waveCanvas { width:100%; height:40px; display:block; border-radius:6px; }
+
+@keyframes pop { from{transform:scale(0.7);opacity:0} to{transform:scale(1);opacity:1} }
+
+/* BUTTONS */
+.start-btn {
+  display:block; width:100%; max-width:260px;
+  margin: 10px auto 6px;
+  padding:13px 28px;
+  font-family:'Unbounded',sans-serif; font-size:0.75rem; font-weight:700;
+  letter-spacing:0.08em; text-transform:uppercase;
+  border:none; border-radius:50px; cursor:pointer;
+  background:linear-gradient(135deg, var(--accent), var(--accent3));
+  color:#fff;
+  box-shadow:0 4px 24px rgba(0,119,255,0.25);
+  transition:transform 0.15s, box-shadow 0.15s;
+}
+.start-btn:hover { transform:translateY(-1px); box-shadow:0 6px 32px rgba(0,119,255,0.35); }
+.start-btn.running {
+  background:linear-gradient(135deg, var(--accent2) 0%, #ff6b35 100%);
+  box-shadow:0 4px 24px rgba(255,62,128,0.3);
+}
+
+.status-dot {
+  display:inline-block; width:8px; height:8px; border-radius:50%;
+  background:rgba(255,255,255,0.5); margin-right:8px; vertical-align:middle;
+}
+.status-dot.on { background:#fff; box-shadow:0 0 6px rgba(255,255,255,0.8); animation:blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.clear-btn {
+  display:block; margin:0 auto 8px;
+  background:transparent; border:1px solid var(--border);
+  border-radius:50px; padding:6px 18px;
+  color:var(--muted); font-family:'Space Mono',monospace;
+  font-size:0.65rem; cursor:pointer;
+  transition:border-color 0.2s, color 0.2s;
+}
+.clear-btn:hover { border-color:var(--accent2); color:var(--accent2); }
+
+/* ─── PAYWALL OVERLAY ────────────────────────────────────────────────────── */
+#paywallOverlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(20,20,40,0.6);
+  backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.paywall-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+  box-shadow: 0 16px 60px rgba(0,0,0,0.18);
+  position: relative;
+}
+
+.paywall-icon { font-size: 2.5rem; margin-bottom: 10px; }
+
+.paywall-title {
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 900;
+  font-size: 1.2rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+}
+
+.paywall-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.paywall-features {
+  text-align: left;
+  margin-bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.paywall-feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.75rem;
+  color: var(--text);
+}
+
+.paywall-feature .icon {
+  width: 24px; height: 24px;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 0.7rem; flex-shrink: 0;
+}
+
+.paywall-price {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 0.65rem;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.paywall-price strong {
+  font-size: 1.3rem;
+  color: var(--text);
+  display: block;
+  margin-bottom: 2px;
+}
+
+#btnCheckout {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 50px;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(135deg, #009ee3, #00b0f4); /* MP blue */
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(0,158,227,0.3);
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+  margin-bottom: 10px;
+  letter-spacing: 0.04em;
+}
+#btnCheckout:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(0,158,227,0.4); }
+#btnCheckout:disabled { opacity: 0.6; }
+
+.paywall-dismiss {
+  font-size: 0.68rem;
+  color: var(--muted);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ─── TOAST ──────────────────────────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--text);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 200;
+  transition: transform 0.3s;
+  pointer-events: none;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ─── AUTH SCREEN ─────────────────────────────────────────────────────── -->
+<div id="authScreen">
+  <div class="auth-logo">VocalPitch</div>
+  <p class="auth-tagline">Detector de notas em tempo real</p>
+
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin"    onclick="switchTab('login')">Entrar</button>
+      <button class="auth-tab"        id="tabRegister" onclick="switchTab('register')">Criar conta</button>
+    </div>
+
+    <div class="auth-field">
+      <label>Email</label>
+      <input type="email" id="authEmail" placeholder="seu@email.com" autocomplete="email">
+    </div>
+    <div class="auth-field">
+      <label>Senha</label>
+      <input type="password" id="authPass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+
+    <div class="auth-error" id="authError"></div>
+
+    <button class="btn-primary" id="btnLogin"    onclick="doLogin()">Entrar</button>
+    <div class="auth-divider">ou</div>
+    <button class="btn-primary" id="btnRegister" onclick="doRegister()" style="display:none;background:linear-gradient(135deg,var(--accent3),var(--accent2))">Criar conta grátis</button>
+  </div>
+</div>
+
+<!-- ─── APP SCREEN ──────────────────────────────────────────────────────── -->
+<div id="appScreen">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <span class="topbar-logo">VocalPitch</span>
+    <div class="topbar-right">
+      <span class="plan-badge free" id="planBadge">FREE</span>
+      <button class="btn-icon" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+
+  <!-- Free usage bar -->
+  <div id="freeBarWrap">
+    <div class="free-bar-header">
+      <span id="freeBarLabel">0/20 detecções gratuitas</span>
+      <button class="btn-upgrade-small" onclick="showPaywall()">⚡ Upgrade Pro</button>
+    </div>
+    <div class="free-bar-track">
+      <div id="freeBarFill"></div>
+    </div>
+  </div>
+
+  <!-- Note display -->
+  <div class="note-display" id="noteDisplay">
+    <div class="big-note silent" id="bigNote">—</div>
+    <div class="freq-label"><span id="freqText">aguardando microfone...</span></div>
+    <div class="cents-container">
+      <div class="cents-label"><span>♭ BEMOL</span><span>AFINADO</span><span>SUSTENIDO ♯</span></div>
+      <div class="cents-track"><div class="cents-needle" id="centsNeedle"></div></div>
+      <div class="cents-text" id="centsText"></div>
+    </div>
+    <div class="confidence-bar"><div class="confidence-fill" id="confFill"></div></div>
+  </div>
+
+  <!-- Waveform -->
+  <div class="section-card">
+    <div class="section-title">● Forma de Onda</div>
+    <canvas id="waveCanvas" width="660" height="40"></canvas>
+  </div>
+
+  <!-- Key detection -->
+  <div class="section-card">
+    <div class="section-title">● Tom Detectado</div>
+    <div class="key-grid">
+      <div class="key-card top">
+        <div class="key-card-label">Tom Mais Provável</div>
+        <div class="key-card-value" id="keyMajor">—</div>
+        <div class="key-card-sub"  id="keyMajorSub">cante para detectar</div>
+      </div>
+      <div class="key-card">
+        <div class="key-card-label">Relativo</div>
+        <div class="key-card-value" id="keyMinor">—</div>
+        <div class="key-card-sub"  id="keyMinorSub">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Note history -->
+  <div class="section-card">
+    <div class="section-title">● Notas Cantadas <span id="noteCount" style="color:var(--accent);margin-left:8px">0</span></div>
+    <div class="notes-history" id="notesHistory">
+      <span style="color:var(--muted);font-size:0.7rem">as notas aparecem aqui...</span>
+    </div>
+  </div>
+
+  <button class="start-btn" id="startBtn" onclick="toggleMic()">
+    <span class="status-dot" id="statusDot"></span>Iniciar Microfone
+  </button>
+  <button class="clear-btn" onclick="clearHistory()">limpar histórico</button>
+</div>
+
+<!-- ─── PAYWALL OVERLAY ─────────────────────────────────────────────────── -->
+<div id="paywallOverlay">
+  <div class="paywall-card">
+    <div class="paywall-icon">🎵</div>
+    <div class="paywall-title">VocalPitch Pro</div>
+    <p class="paywall-sub">Você usou todas as suas 20 detecções gratuitas. Faça upgrade para detecções ilimitadas.</p>
+
+    <div class="paywall-features">
+      <div class="paywall-feature">
+        <div class="icon">∞</div>
+        <span>Detecções de tom ilimitadas</span>
+      </div>
+      <div class="paywall-feature">
+        <div class="icon">🎼</div>
+        <span>Todas as escalas e modos</span>
+      </div>
+      <div class="paywall-feature">
+        <div class="icon">📊</div>
+        <span>Histórico de sessões salvo</span>
+      </div>
+      <div class="paywall-feature">
+        <div class="icon">⚡</div>
+        <span>Prioridade em novos recursos</span>
+      </div>
+    </div>
+
+    <div class="paywall-price">
+      <strong>R$ 19,90<span style="font-size:0.7rem;font-family:'Space Mono'">/mês</span></strong>
+      Cancele quando quiser
+    </div>
+
+    <button id="btnCheckout" onclick="startCheckout()">
+      Assinar Pro — R$19,90/mês
+    </button>
+    <div class="paywall-dismiss" onclick="hidePaywall()">Continuar no plano grátis</div>
+  </div>
+</div>
+
+<!-- ─── TOAST ──────────────────────────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<script>
+// ─── AUTH TAB SWITCH ─────────────────────────────────────────────────────────
+function switchTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('tabLogin').className    = 'auth-tab' + (isLogin ? ' active' : '');
+  document.getElementById('tabRegister').className = 'auth-tab' + (!isLogin ? ' active' : '');
+  document.getElementById('btnLogin').style.display    = isLogin ? 'block' : 'none';
+  document.getElementById('btnRegister').style.display = isLogin ? 'none' : 'block';
+  document.getElementById('authError').textContent = '';
+}
+
+// ─── MUSIC THEORY ────────────────────────────────────────────────────────────
+const NOTE_NAMES    = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const NOTE_NAMES_PT = ['Dó','Dó#','Ré','Ré#','Mi','Fá','Fá#','Sol','Sol#','Lá','Lá#','Si'];
+
+const SCALES = {
+  'Maior':        [0,2,4,5,7,9,11],
+  'Menor':        [0,2,3,5,7,8,10],
+  'Pent. Maior':  [0,2,4,7,9],
+  'Pent. Menor':  [0,3,5,7,10],
+};
+
+function buildScale(root, intervals) { return intervals.map(i => (root + i) % 12); }
+
+function keyScore(noteCounts, root, intervals) {
+  const scale = buildScale(root, intervals);
+  let score = 0, total = 0;
+  noteCounts.forEach((count, note) => {
+    total += count;
+    if (scale.includes(note)) score += count;
+  });
+  const coverage = intervals.length / 7;
+  return total > 0 ? (score / total) * coverage : 0;
+}
+
+function detectKey(history) {
+  if (history.length < 3) return null;
+  const counts = new Array(12).fill(0);
+  history.forEach(n => counts[n % 12]++);
+  let bestScore = -1, bestRoot = 0, bestScale = 'Maior';
+  for (const [scaleName, intervals] of Object.entries(SCALES)) {
+    for (let r = 0; r < 12; r++) {
+      const s = keyScore(counts, r, intervals);
+      if (s > bestScore) { bestScore = s; bestRoot = r; bestScale = scaleName; }
+    }
+  }
+  return { root: bestRoot, score: bestScore, scale: bestScale };
+}
+
+// ─── PITCH DETECTION (autocorrelation) ───────────────────────────────────────
+function autoCorrelate(buf, sampleRate) {
+  const SIZE = buf.length;
+  const MAX  = Math.floor(SIZE / 2);
+  let rms = 0;
+  for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
+  rms = Math.sqrt(rms / SIZE);
+  if (rms < 0.002) return -1;
+
+  let best_offset = -1, best_corr = 0, lastCorr = 1;
+  let foundGoodCorr = false, corr = 0;
+
+  for (let offset = 0; offset < MAX; offset++) {
+    corr = 0;
+    for (let i = 0; i < MAX; i++) corr += buf[i] * buf[i + offset];
+    corr /= MAX;
+    if (foundGoodCorr && corr < lastCorr) {
+      if (best_corr > 0.8) {
+        let shift = 0;
+        if (offset > 2) {
+          const d0 = corr - lastCorr;
+          const next = offset+1 < MAX ? (() => { let c=0; for(let i=0;i<MAX;i++) c+=buf[i]*buf[i+offset+1]; return c/MAX; })() : corr;
+          const d1 = corr - next;
+          shift = d1 / (d0 + d1) * 0.5;
+        }
+        return sampleRate / (best_offset + shift);
+      }
+      foundGoodCorr = false;
+    }
+    if (!foundGoodCorr && corr > 0.8) foundGoodCorr = true;
+    if (corr > best_corr) { best_corr = corr; best_offset = offset; }
+    lastCorr = corr;
+  }
+  if (best_corr > 0.005) return sampleRate / best_offset;
+  return -1;
+}
+
+function freqToNote(freq) {
+  if (freq <= 0) return null;
+  const noteNum  = 12 * (Math.log2(freq / 440)) + 69;
+  const rounded  = Math.round(noteNum);
+  const cents    = (noteNum - rounded) * 100;
+  const idx      = ((rounded % 12) + 12) % 12;
+  const octave   = Math.floor(rounded / 12) - 1;
+  return { name: NOTE_NAMES[idx], namePt: NOTE_NAMES_PT[idx], octave, cents, index: idx };
+}
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let audioCtx = null, analyser = null, source = null, micStream = null;
+let running = false;
+let noteHistory = [], noteDisplayHistory = [];
+let animFrame = null;
+let lastNoteName = '', lastNoteTime = 0;
+let keyDetectionCount = 0; // conta chamadas reais de detectKey
+
+const canvas  = document.getElementById('waveCanvas');
+const waveCtx = canvas.getContext('2d');
+
+// ─── UI ───────────────────────────────────────────────────────────────────────
+function updateNoteDisplay(noteInfo, freq) {
+  const bigNote    = document.getElementById('bigNote');
+  const freqText   = document.getElementById('freqText');
+  const needle     = document.getElementById('centsNeedle');
+  const centsText  = document.getElementById('centsText');
+  const noteDisplay= document.getElementById('noteDisplay');
+  const confFill   = document.getElementById('confFill');
+
+  if (!noteInfo) {
+    bigNote.textContent   = '—';
+    bigNote.className     = 'big-note silent';
+    freqText.innerHTML    = '<span class="freq-value">silêncio</span>';
+    needle.style.left     = '50%';
+    needle.className      = 'cents-needle';
+    centsText.textContent = '';
+    noteDisplay.classList.remove('active');
+    confFill.style.width  = '0%';
+    return;
+  }
+
+  noteDisplay.classList.add('active');
+  bigNote.textContent  = noteInfo.name + noteInfo.octave;
+  bigNote.className    = 'big-note';
+  freqText.innerHTML   = `${noteInfo.namePt} · <span class="freq-value">${freq.toFixed(1)} Hz</span>`;
+
+  const pos = 50 + (noteInfo.cents / 50) * 45;
+  needle.style.left = pos + '%';
+
+  const absCents = Math.abs(noteInfo.cents);
+  confFill.style.width = Math.max(0, 100 - absCents * 2) + '%';
+
+  if (absCents < 10) {
+    needle.className      = 'cents-needle in-tune';
+    centsText.textContent = '✓ afinado';
+    centsText.style.color = '#00c96e';
+  } else if (noteInfo.cents > 0) {
+    needle.className      = 'cents-needle sharp';
+    centsText.textContent = `+${noteInfo.cents.toFixed(0)}¢ sustenido`;
+    centsText.style.color = 'var(--accent2)';
+  } else {
+    needle.className      = 'cents-needle flat';
+    centsText.textContent = `${noteInfo.cents.toFixed(0)}¢ bemol`;
+    centsText.style.color = 'var(--accent3)';
+  }
+}
+
+function updateKeyDisplay() {
+  // ── FREE LIMIT: conta cada detecção de tom ──────────────────────────────
+  if (window._vp) {
+    const allowed = window.incrementDetection();
+    if (!allowed) return;
+  }
+
+  const result = detectKey(noteHistory);
+  const keyMajor    = document.getElementById('keyMajor');
+  const keyMajorSub = document.getElementById('keyMajorSub');
+  const keyMinor    = document.getElementById('keyMinor');
+  const keyMinorSub = document.getElementById('keyMinorSub');
+
+  if (!result) {
+    keyMajor.textContent    = '—';
+    keyMajorSub.textContent = 'cante mais notas';
+    keyMinor.textContent    = '—';
+    keyMinorSub.textContent = '—';
+    return;
+  }
+
+  const r        = result.root;
+  const pct      = Math.min(99, Math.round(result.score * 100 / (result.scale.includes('Pent') ? (5/7) : 1)));
+  keyMajor.textContent    = `${NOTE_NAMES[r]} ${result.scale}`;
+  keyMajorSub.textContent = `${NOTE_NAMES_PT[r]} ${result.scale} · ${pct}% fit`;
+
+  if (result.scale === 'Maior') {
+    const rel = (r+9)%12;
+    keyMinor.textContent    = `${NOTE_NAMES[rel]}m`;
+    keyMinorSub.textContent = `${NOTE_NAMES_PT[rel]} menor relativo`;
+  } else if (result.scale === 'Menor') {
+    const rel = (r+3)%12;
+    keyMinor.textContent    = `${NOTE_NAMES[rel]} Maior`;
+    keyMinorSub.textContent = `${NOTE_NAMES_PT[rel]} maior relativo`;
+  } else if (result.scale === 'Pent. Maior') {
+    const rel = (r+9)%12;
+    keyMinor.textContent    = `${NOTE_NAMES[rel]} P.m`;
+    keyMinorSub.textContent = `${NOTE_NAMES_PT[rel]} pent. menor rel.`;
+  } else {
+    const rel = (r+3)%12;
+    keyMinor.textContent    = `${NOTE_NAMES[rel]} P.M`;
+    keyMinorSub.textContent = `${NOTE_NAMES_PT[rel]} pent. maior rel.`;
+  }
+}
+
+function addNoteToHistory(noteName, noteIndex) {
+  const now = Date.now();
+  if (noteName === lastNoteName && now - lastNoteTime < 400) return;
+  lastNoteName = noteName;
+  lastNoteTime = now;
+
+  noteHistory.push(noteIndex);
+  if (noteHistory.length > 80) noteHistory.shift();
+  noteDisplayHistory.unshift(noteName);
+  if (noteDisplayHistory.length > 20) noteDisplayHistory.pop();
+
+  renderNoteHistory();
+  updateKeyDisplay();
+}
+
+function renderNoteHistory() {
+  const container = document.getElementById('notesHistory');
+  const count     = document.getElementById('noteCount');
+  if (!noteDisplayHistory.length) {
+    container.innerHTML = '<span style="color:var(--muted);font-size:0.7rem">as notas aparecem aqui...</span>';
+    count.textContent = '0';
+    return;
+  }
+  count.textContent = noteHistory.length;
+  container.innerHTML = noteDisplayHistory.map((n, i) =>
+    `<span class="note-tag" style="${i > 0 ? `opacity:${Math.max(0.2,1-i*0.07)}` : ''}">${n}</span>`
+  ).join('');
+}
+
+function drawWaveform(dataArray) {
+  const w = canvas.width, h = canvas.height;
+  waveCtx.clearRect(0,0,w,h);
+  waveCtx.fillStyle = '#f4f5f7';
+  waveCtx.fillRect(0,0,w,h);
+  waveCtx.lineWidth   = 2;
+  waveCtx.strokeStyle = running ? 'rgba(0,119,255,0.7)' : 'rgba(180,185,200,0.8)';
+  waveCtx.beginPath();
+  const sliceWidth = w / dataArray.length;
+  let x = 0;
+  for (let i = 0; i < dataArray.length; i++) {
+    const v = dataArray[i] / 128.0;
+    const y = v * h / 2;
+    i === 0 ? waveCtx.moveTo(x,y) : waveCtx.lineTo(x,y);
+    x += sliceWidth;
+  }
+  waveCtx.lineTo(w, h/2);
+  waveCtx.stroke();
+}
+
+// ─── AUDIO LOOP ──────────────────────────────────────────────────────────────
+function audioLoop() {
+  if (!running) return;
+  animFrame = requestAnimationFrame(audioLoop);
+  const timeDomain     = new Float32Array(analyser.fftSize);
+  const byteTimeDomain = new Uint8Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(timeDomain);
+  analyser.getByteTimeDomainData(byteTimeDomain);
+  drawWaveform(byteTimeDomain);
+  const freq = autoCorrelate(timeDomain, audioCtx.sampleRate);
+  if (freq > 60 && freq < 1200) {
+    const noteInfo = freqToNote(freq);
+    if (noteInfo) {
+      updateNoteDisplay(noteInfo, freq);
+      addNoteToHistory(noteInfo.name + noteInfo.octave, noteInfo.index);
+    }
+  } else {
+    updateNoteDisplay(null);
+  }
+}
+
+// ─── MIC CONTROL ─────────────────────────────────────────────────────────────
+async function toggleMic() {
+  running ? stopMic() : await startMic();
+}
+
+async function startMic() {
+  // Verifica limite free antes de iniciar
+  if (window._vp && !window._vp.isPro && window._vp.detectionCount >= window._vp.FREE_LIMIT) {
+    showPaywall(); return;
+  }
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false }
+    });
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    analyser.smoothingTimeConstant = 0.5;
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.value = 4.0;
+    source = audioCtx.createMediaStreamSource(micStream);
+    source.connect(gainNode);
+    gainNode.connect(analyser);
+    running = true;
+    document.getElementById('startBtn').innerHTML = '<span class="status-dot on"></span>Parar';
+    document.getElementById('startBtn').classList.add('running');
+    audioLoop();
+  } catch(e) {
+    alert('Erro ao acessar microfone: ' + e.message);
+  }
+}
+
+function stopMic() {
+  running = false;
+  if (animFrame) cancelAnimationFrame(animFrame);
+  if (micStream) micStream.getTracks().forEach(t => t.stop());
+  if (audioCtx)  audioCtx.close();
+  document.getElementById('startBtn').innerHTML = '<span class="status-dot"></span>Iniciar Microfone';
+  document.getElementById('startBtn').classList.remove('running');
+  updateNoteDisplay(null);
+  const w = canvas.width, h = canvas.height;
+  waveCtx.clearRect(0,0,w,h);
+  waveCtx.fillStyle = '#f4f5f7'; waveCtx.fillRect(0,0,w,h);
+  waveCtx.strokeStyle = 'rgba(180,185,200,0.8)'; waveCtx.lineWidth = 2;
+  waveCtx.beginPath(); waveCtx.moveTo(0,h/2); waveCtx.lineTo(w,h/2); waveCtx.stroke();
+}
+
+function clearHistory() {
+  noteHistory = []; noteDisplayHistory = [];
+  renderNoteHistory();
+  document.getElementById('keyMajor').textContent    = '—';
+  document.getElementById('keyMajorSub').textContent = 'cante mais notas';
+  document.getElementById('keyMinor').textContent    = '—';
+  document.getElementById('keyMinorSub').textContent = '—';
+}
+</script>
+</body>
+</html>

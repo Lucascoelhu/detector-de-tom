@@ -185,29 +185,79 @@
   const BACKEND_URL = "https://detector-de-tom.vercel.app/api";
 
   window.startCheckout = async () => {
-    if (!window._vp.user) return;
-    const btn = document.getElementById('btnCheckout');
-    btn.textContent = 'Aguarde...';
-    btn.disabled = true;
-    try {
-      const res  = await fetch(`${BACKEND_URL}/create-preference`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid: window._vp.user.uid, email: window._vp.user.email })
-      });
-      const data = await res.json();
-      if (data.init_point) {
-        window.location.href = data.init_point; // redireciona para MP
-      } else {
-        alert('Erro ao iniciar pagamento. Tente novamente.');
-      }
-    } catch(e) {
-      alert('Erro de conexão com o servidor de pagamentos.');
-    } finally {
-      btn.textContent = 'Comprar Acesso Vitalício — R$29,90';
-      btn.disabled = false;
+  if (!window._vp.user) return;
+  const btn = document.getElementById('btnCheckout');
+  btn.textContent = 'Gerando Pix...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/create-preference`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uid: window._vp.user.uid,
+        email: window._vp.user.email
+      })
+    });
+    const data = await res.json();
+
+    if (data.qr_code) {
+      // Mostrar tela do QR Code
+      document.getElementById('pixOffer').style.display = 'none';
+      document.getElementById('pixQR').style.display = 'block';
+      document.getElementById('pixQRImg').src = `data:image/png;base64,${data.qr_code_base64}`;
+      document.getElementById('pixCode').textContent = data.qr_code;
+      window._currentPaymentId = data.payment_id;
+      startPolling(data.payment_id);
+    } else {
+      alert('Erro ao gerar Pix. Tente novamente.');
     }
-  };
+  } catch(e) {
+    alert('Erro de conexão. Tente novamente.');
+  } finally {
+    btn.textContent = 'Pagar com Pix — R$29,90';
+    btn.disabled = false;
+  }
+};
+
+window.copyPix = () => {
+  const code = document.getElementById('pixCode').textContent;
+  navigator.clipboard.writeText(code);
+  showToast('✅ Código Pix copiado!');
+};
+
+// Verifica a cada 5s se o pagamento foi aprovado
+function startPolling(paymentId) {
+  const interval = setInterval(async () => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/check-payment?payment_id=${paymentId}&uid=${window._vp.user.uid}`);
+      const data = await res.json();
+
+      if (data.approved) {
+        clearInterval(interval);
+        window._vp.isPro = true;
+        updatePlanBadge();
+        hidePaywall();
+        // Resetar telas para próxima vez
+        document.getElementById('pixOffer').style.display = 'block';
+        document.getElementById('pixQR').style.display = 'none';
+        showToast('🎉 Pagamento confirmado! Bem-vindo ao Pro!');
+      } else {
+        document.getElementById('pixStatus').textContent =
+          data.status === 'pending' ? '⏳ Aguardando pagamento...' : `Status: ${data.status}`;
+      }
+    } catch(e) {}
+  }, 5000);
+
+  // Para o polling após 30 minutos
+  setTimeout(() => clearInterval(interval), 30 * 60 * 1000);
+}
+
+window.hidePaywall = () => {
+  document.getElementById('paywallOverlay').style.display = 'none';
+  document.getElementById('pixOffer').style.display = 'block';
+  document.getElementById('pixQR').style.display = 'none';
+};
 
   // Verificar retorno do MP (success/failure na URL)
   const params = new URLSearchParams(window.location.search);
@@ -907,38 +957,55 @@ canvas#waveCanvas { width:100%; height:40px; display:block; border-radius:6px; }
 <!-- ─── PAYWALL OVERLAY ─────────────────────────────────────────────────── -->
 <div id="paywallOverlay">
   <div class="paywall-card">
-    <div class="paywall-icon">🎵</div>
-    <div class="paywall-title">VocalPitch Pro</div>
-    <p class="paywall-sub">Você usou todas as suas 20 detecções gratuitas. Faça upgrade para detecções ilimitadas.</p>
 
-    <div class="paywall-features">
-      <div class="paywall-feature">
-        <div class="icon">∞</div>
-        <span>Detecções de tom ilimitadas</span>
+    <!-- TELA 1: oferta -->
+    <div id="pixOffer">
+      <div class="paywall-icon">🎵</div>
+      <div class="paywall-title">Detector de Tom Pro</div>
+      <p class="paywall-sub">Acesso vitalício. Pague uma vez, use para sempre.</p>
+
+      <div class="paywall-features">
+        <div class="paywall-feature"><div class="icon">∞</div><span>Detecções ilimitadas</span></div>
+        <div class="paywall-feature"><div class="icon">🎼</div><span>Todas as escalas e modos</span></div>
+        <div class="paywall-feature"><div class="icon">📊</div><span>Histórico de sessões salvo</span></div>
+        <div class="paywall-feature"><div class="icon">⚡</div><span>Prioridade em novos recursos</span></div>
       </div>
-      <div class="paywall-feature">
-        <div class="icon">🎼</div>
-        <span>Todas as escalas e modos</span>
+
+      <div class="paywall-price">
+        <strong>R$ 29,90<span style="font-size:0.7rem;font-family:'Space Mono'"> único</span></strong>
+        Pague uma vez, use para sempre
       </div>
-      <div class="paywall-feature">
-        <div class="icon">📊</div>
-        <span>Histórico de sessões salvo</span>
-      </div>
-      <div class="paywall-feature">
-        <div class="icon">⚡</div>
-        <span>Prioridade em novos recursos</span>
-      </div>
+
+      <button id="btnCheckout" onclick="startCheckout()">
+        Pagar com Pix — R$29,90
+      </button>
+      <div class="paywall-dismiss" onclick="hidePaywall()">Continuar no plano grátis</div>
     </div>
 
-    <div class="paywall-price">
-      <strong>R$ 29,90<span style="font-size:0.7rem;font-family:'Space Mono'"> único</span></strong>
-      Pague uma vez, use para sempre
+    <!-- TELA 2: QR Code Pix -->
+    <div id="pixQR" style="display:none;text-align:center;">
+      <div style="font-size:1.5rem;margin-bottom:8px">📱</div>
+      <div class="paywall-title" style="font-size:1rem;margin-bottom:6px">Pague com Pix</div>
+      <p style="font-size:0.72rem;color:var(--muted);margin-bottom:14px">Abra o app do seu banco e escaneie o QR Code ou use o copia e cola</p>
+
+      <img id="pixQRImg" src="" style="width:180px;height:180px;border-radius:12px;margin:0 auto 14px;display:block;border:1px solid var(--border)">
+
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:14px;position:relative">
+        <div style="font-size:0.6rem;color:var(--muted);margin-bottom:4px;letter-spacing:0.08em;text-transform:uppercase">Pix Copia e Cola</div>
+        <div id="pixCode" style="font-size:0.62rem;color:var(--text);word-break:break-all;line-height:1.5;max-height:60px;overflow:hidden"></div>
+      </div>
+
+      <button onclick="copyPix()" style="width:100%;padding:11px;border:none;border-radius:50px;font-family:'Unbounded',sans-serif;font-size:0.72rem;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#00b894,#00cec9);color:#fff;margin-bottom:10px">
+        📋 Copiar código Pix
+      </button>
+
+      <div id="pixStatus" style="font-size:0.72rem;color:var(--muted);margin-bottom:10px">
+        ⏳ Aguardando pagamento...
+      </div>
+
+      <div class="paywall-dismiss" onclick="hidePaywall()">Fechar</div>
     </div>
 
-    <button id="btnCheckout" onclick="startCheckout()">
-      Assinar Pro — R$19,90/mês
-    </button>
-    <div class="paywall-dismiss" onclick="hidePaywall()">Continuar no plano grátis</div>
   </div>
 </div>
 

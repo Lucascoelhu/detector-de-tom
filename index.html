@@ -8,9 +8,11 @@
 
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { initializeApp }                        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+                                                  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc }
+                                                  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCPTM3tzXX8jqEoDr3NUAJ4TkVQhJXskyI",
@@ -25,116 +27,160 @@
   const auth = getAuth(app);
   const db   = getFirestore(app);
 
-  window._vp = { auth, db, user: null, isPro: false, detectionCount: 0, FREE_LIMIT: 1000 };
+  // ── Constantes ────────────────────────────────────────────────────────────────
+  const FREE_LIMIT = 1000;
+  const LS_KEY     = 'dectTom_detections'; // localStorage key
 
-  // ── EmailJS config ───────────────────────────────────────────────────────────
-  const EJS_SERVICE  = 'service_5ithvpm';
-  const EJS_TEMPLATE = 'template_qne48hr';
-  const EJS_KEY      = 'QIsqMqd5iYKVduzZ2';
+  // ── Estado global ─────────────────────────────────────────────────────────────
+  window._vp = { auth, db, user: null, isPro: false, detectionCount: 0, FREE_LIMIT };
 
-  // ── Estado OTP ────────────────────────────────────────────────────────────────
-  let _otpPending = null; // { code, email, uid, expires }
-  let _suppressAuthListener = false;
+  // ── Inicialização: app abre direto, sem tela de login ─────────────────────────
+  // Lê contagem local para visitantes
+  function getLocalCount() { return parseInt(localStorage.getItem(LS_KEY) || '0', 10); }
+  function setLocalCount(n){ localStorage.setItem(LS_KEY, String(n)); }
 
   onAuthStateChanged(auth, async (user) => {
-    if (_suppressAuthListener) return;
     if (user) {
-      // Checar se foi verificado via OTP nosso (campo no Firestore)
-      const ref  = doc(db, 'users', user.uid);
-      const snap = await getDoc(ref);
-      if (!snap.exists() || !snap.data().emailVerified) {
-        _suppressAuthListener = true;
-        await signOut(auth);
-        _suppressAuthListener = false;
-        showAuth();
-        return;
-      }
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (!snap.exists()) { await signOut(auth); return; }
+      const data = snap.data();
       window._vp.user = user;
-      await loadUserData(user.uid);
-      showWelcome(user.email);
+      window._vp.isPro = data.plan === 'pro';
+      window._vp.detectionCount = data.detectionCount || 0;
+      // Mostra tela de boas-vindas com nome
+      const nameDisplay = data.nome ? data.nome.split(' ')[0] : user.email.split('@')[0];
+      showWelcomeScreen(nameDisplay);
     } else {
+      // Visitante — carrega contagem local e abre app direto
       window._vp.user = null;
       window._vp.isPro = false;
-      showAuth();
+      window._vp.detectionCount = getLocalCount();
+      showApp();
     }
   });
 
-  async function sendOtpEmail(email, code) {
-    const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        service_id:  EJS_SERVICE,
-        template_id: EJS_TEMPLATE,
-        user_id:     EJS_KEY,
-        template_params: { email, code }
-      })
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error('EmailJS error ' + res.status + ': ' + text);
-    }
-  }
-
-  async function loadUserData(uid) {
-    const ref  = doc(db, "users", uid);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) {
-      await setDoc(ref, { plan: "free", detectionCount: 0, createdAt: new Date() });
-      window._vp.isPro = false;
+  // ── Cadastro pós-pagamento ────────────────────────────────────────────────────
+  window.doRegisterAfterPayment = async () => {
+    const nome  = document.getElementById('regNome').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const pass  = document.getElementById('regPass').value;
+    const err   = document.getElementById('regError');
+    err.textContent = '';
+    err.style.color = '';
+    if (!nome)  { err.textContent = 'Digite seu nome.'; return; }
+    if (!email) { err.textContent = 'Digite seu email.'; return; }
+    if (!pass || pass.length < 6) { err.textContent = 'Senha mín. 6 caracteres.'; return; }
+    try {
+      document.getElementById('btnRegisterFinal').disabled = true;
+      document.getElementById('btnRegisterFinal').textContent = 'Criando conta...';
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      const uid  = cred.user.uid;
+      await setDoc(doc(db, 'users', uid), {
+        nome, plan: 'pro', detectionCount: 0, createdAt: new Date()
+      });
+      window._vp.user   = cred.user;
+      window._vp.isPro  = true;
       window._vp.detectionCount = 0;
-    } else {
-      const data = snap.data();
-      window._vp.isPro = data.plan === "pro";
-      window._vp.detectionCount = data.detectionCount || 0;
+      localStorage.removeItem(LS_KEY);
+      closeRegisterModal();
+      updatePlanUI();
+      updateFreeBar();
+      const lockEl = document.getElementById('hsSuggestLock');
+      if (lockEl) lockEl.style.display = 'none';
+      showToast('🎉 Conta criada! Bem-vindo ao Pro, ' + nome.split(' ')[0] + '!');
+    } catch(e) {
+      const map = {
+        'auth/email-already-in-use': 'Este email já tem conta. Faça login.',
+        'auth/invalid-email':        'Email inválido.',
+        'auth/weak-password':        'Senha fraca (mín. 6 caracteres).',
+      };
+      err.textContent = map[e.code] || 'Erro ao criar conta.';
+    } finally {
+      const btn = document.getElementById('btnRegisterFinal');
+      if (btn) { btn.disabled = false; btn.textContent = 'Criar minha conta Pro'; }
     }
-  }
+  };
 
-  function showWelcome(email) {
-    const raw  = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ');
-    const name = raw.charAt(0).toUpperCase() + raw.slice(1);
+  // ── Login para quem já tem conta ─────────────────────────────────────────────
+  window.doLogin = async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass  = document.getElementById('loginPass').value;
+    const err   = document.getElementById('loginError');
+    err.textContent = '';
+    if (!email || !pass) { err.textContent = 'Preencha email e senha.'; return; }
+    try {
+      document.getElementById('btnLogin').disabled = true;
+      document.getElementById('btnLogin').textContent = 'Entrando...';
+      await signInWithEmailAndPassword(auth, email, pass);
+      closeLoginModal();
+    } catch(e) {
+      const map = {
+        'auth/invalid-credential': 'Email ou senha incorretos.',
+        'auth/user-not-found':     'Usuário não encontrado.',
+        'auth/wrong-password':     'Senha incorreta.',
+        'auth/too-many-requests':  'Muitas tentativas. Aguarde.',
+      };
+      err.textContent = map[e.code] || 'Erro ao entrar.';
+    } finally {
+      const btn = document.getElementById('btnLogin');
+      if (btn) { btn.disabled = false; btn.textContent = 'Entrar'; }
+    }
+  };
+
+  window.doLogout = async () => {
+    if (window.stopMic) window.stopMic();
+    await signOut(auth);
+    window._vp.detectionCount = getLocalCount();
+    updatePlanUI();
+    updateFreeBar();
+    showToast('Até logo!');
+  };
+
+  // ── Modais ────────────────────────────────────────────────────────────────────
+  window.openLoginModal = () => {
+    document.getElementById('loginModal').classList.add('open');
+    document.getElementById('loginError').textContent = '';
+  };
+  window.closeLoginModal = () => document.getElementById('loginModal').classList.remove('open');
+
+  window.openRegisterModal = () => {
+    document.getElementById('registerModal').classList.add('open');
+    document.getElementById('regError').textContent = '';
+  };
+  window.closeRegisterModal = () => document.getElementById('registerModal').classList.remove('open');
+
+  // ── Telas ─────────────────────────────────────────────────────────────────────
+  function showWelcomeScreen(name) {
     const display = name.length > 16 ? name.slice(0, 16) + '…' : name;
     document.getElementById('welcomeName').textContent = display;
     document.getElementById('welcomeScreen').style.display = 'flex';
-    document.getElementById('authScreen').style.display    = 'none';
     document.getElementById('appScreen').style.display     = 'none';
-    document.getElementById('otpScreen').style.display     = 'none';
     setTimeout(() => {
       document.getElementById('welcomeScreen').style.display = 'none';
       showApp();
     }, 2200);
   }
 
-  function showAuth() {
-    document.getElementById('authScreen').style.display    = 'flex';
-    document.getElementById('appScreen').style.display     = 'none';
-    document.getElementById('welcomeScreen').style.display = 'none';
-    document.getElementById('otpScreen').style.display     = 'none';
-    _otpPending = null;
-  }
-  window.showAuth = showAuth;
-
-  window.showOtpScreen = function(email, mode) {
-    document.getElementById('authScreen').style.display    = 'none';
-    document.getElementById('appScreen').style.display     = 'none';
-    document.getElementById('welcomeScreen').style.display = 'none';
-    document.getElementById('otpScreen').style.display     = 'flex';
-    document.getElementById('otpEmailLabel').textContent   = email;
-    document.getElementById('otpInput').value              = '';
-    document.getElementById('otpError').textContent        = '';
-    document.getElementById('otpError').style.color        = '';
-    setTimeout(() => document.getElementById('otpInput').focus(), 100);
-  };
-
   function showApp() {
-    document.getElementById('authScreen').style.display    = 'none';
-    document.getElementById('appScreen').style.display     = 'flex';
     document.getElementById('welcomeScreen').style.display = 'none';
+    document.getElementById('appScreen').style.display     = 'flex';
+    updateTopbar();
     updatePlanUI();
     updateFreeBar();
-    // Inicializa o lock dos acordes do tom
     const lockEl = document.getElementById('hsSuggestLock');
-    if (lockEl) lockEl.style.display = (window._vp && window._vp.isPro) ? 'none' : 'flex';
+    if (lockEl) lockEl.style.display = window._vp.isPro ? 'none' : 'flex';
+  }
+
+  function updateTopbar() {
+    const loginBtn  = document.getElementById('topbarLoginBtn');
+    const logoutBtn = document.getElementById('topbarLogoutBtn');
+    if (window._vp.user) {
+      if (loginBtn)  loginBtn.style.display  = 'none';
+      if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+    } else {
+      if (loginBtn)  loginBtn.style.display  = 'inline-flex';
+      if (logoutBtn) logoutBtn.style.display = 'none';
+    }
   }
 
   function updatePlanUI() {
@@ -146,259 +192,65 @@
       document.getElementById('planFreeCard').style.display = 'none';
       document.getElementById('planProCard').style.display  = 'block';
     } else {
-      badge.textContent = 'FREE';
+      badge.textContent = 'TESTE';
       badge.className   = 'plan-badge free';
       document.getElementById('planFreeCard').style.display = 'block';
       document.getElementById('planProCard').style.display  = 'none';
     }
+    updateTopbar();
   }
   window.updatePlanBadge = updatePlanUI;
 
-  window.doRegister = async () => {
-    const email = document.getElementById('authEmail').value.trim();
-    const pass  = document.getElementById('authPass').value;
-    const err   = document.getElementById('authError');
-    err.textContent = '';
-    err.style.color = '';
-    if (!email || !pass) { err.textContent = 'Preencha email e senha.'; return; }
-    try {
-      setAuthLoading(true);
-      _suppressAuthListener = true;
-
-      let uid;
-
-      try {
-        // Tenta criar conta nova
-        const cred = await createUserWithEmailAndPassword(auth, email, pass);
-        uid = cred.user.uid;
-        // Cria documento no Firestore
-        await setDoc(doc(db, 'users', uid), {
-          plan: 'free', detectionCount: 0, createdAt: new Date(),
-          emailVerified: false, otp: {}
-        });
-      } catch(createErr) {
-        if (createErr.code === 'auth/email-already-in-use') {
-          // Conta já existe — faz login para pegar o UID
-          const cred2 = await signInWithEmailAndPassword(auth, email, pass);
-          uid = cred2.user.uid;
-          // Verifica se já está verificado
-          const snap = await getDoc(doc(db, 'users', uid));
-          if (snap.exists() && snap.data().emailVerified) {
-            await signOut(auth);
-            _suppressAuthListener = false;
-            err.textContent = 'Este email já está cadastrado. Use "Entrar".';
-            setAuthLoading(false);
-            return;
-          }
-          // Não verificado ainda — continua para mandar OTP
-          await signOut(auth);
-        } else {
-          throw createErr;
-        }
-      }
-
-      // Gera OTP e salva
-      const code    = String(Math.floor(100000 + Math.random() * 900000));
-      const expires = Date.now() + 10 * 60 * 1000;
-      await setDoc(doc(db, 'users', uid), { otp: { code, expires } }, { merge: true });
-
-      // Envia por email
-      await sendOtpEmail(email, code);
-
-      await signOut(auth).catch(()=>{});
-      _suppressAuthListener = false;
-
-      _otpPending = { email, pass, uid };
-      showOtpScreen(email, 'register');
-
-    } catch(e) {
-      _suppressAuthListener = false;
-      err.style.color = '';
-      err.textContent = translateAuthError(e.code);
-    } finally { setAuthLoading(false); }
-  };
-
-  window.doLogin = async () => {
-    const email = document.getElementById('authEmail').value.trim();
-    const pass  = document.getElementById('authPass').value;
-    const err   = document.getElementById('authError');
-    err.textContent = '';
-    err.style.color = '';
-    if (!email || !pass) { err.textContent = 'Preencha email e senha.'; return; }
-    try {
-      setAuthLoading(true);
-      _suppressAuthListener = true;
-      const cred = await signInWithEmailAndPassword(auth, email, pass);
-      const uid  = cred.user.uid;
-
-      // Verifica se já tem emailVerified no Firestore
-      const snap = await getDoc(doc(db, 'users', uid));
-      const data = snap.exists() ? snap.data() : {};
-
-      if (data.emailVerified) {
-        // Já verificado — deixa onAuthStateChanged assumir
-        _suppressAuthListener = false;
-        return;
-      }
-
-      // Não verificado — gera novo OTP e manda email
-      await signOut(auth);
-      const code    = String(Math.floor(100000 + Math.random() * 900000));
-      const expires = Date.now() + 10 * 60 * 1000;
-      // setDoc com merge para caso não exista ainda
-      await setDoc(doc(db, 'users', uid), { otp: { code, expires } }, { merge: true });
-      await sendOtpEmail(email, code);
-      _suppressAuthListener = false;
-
-      _otpPending = { email, pass, uid };
-      showOtpScreen(email, 'login');
-
-    } catch(e) {
-      _suppressAuthListener = false;
-      err.textContent = translateAuthError(e.code);
-    } finally { setAuthLoading(false); }
-  };
-
-  window.doLogout = async () => { if (window.stopMic) window.stopMic(); await signOut(auth); };
-
-  window.verifyOtp = async () => {
-    const input = document.getElementById('otpInput').value.trim();
-    const err   = document.getElementById('otpError');
-    err.textContent = '';
-    if (!input || input.length !== 6) { err.textContent = 'Digite os 6 dígitos.'; return; }
-    if (!_otpPending) { err.textContent = 'Sessão expirada. Faça login novamente.'; return; }
-
-    try {
-      document.getElementById('btnVerifyOtp').disabled = true;
-      const { email, pass, uid } = _otpPending;
-
-      // Busca OTP salvo no Firestore
-      const snap = await getDoc(doc(db, 'users', uid));
-      const data = snap.exists() ? snap.data() : {};
-      const otp  = data.otp || {};
-
-      if (!otp.code) { err.textContent = 'Código não encontrado. Solicite um novo.'; return; }
-      if (Date.now() > otp.expires) { err.textContent = 'Código expirado. Solicite um novo.'; return; }
-      if (input !== otp.code) { err.textContent = 'Código incorreto. Tente novamente.'; return; }
-
-      // Código correto! Marca como verificado e faz login
-      await updateDoc(doc(db, 'users', uid), { emailVerified: true, otp: {} });
-      _suppressAuthListener = true;
-      const cred = await signInWithEmailAndPassword(auth, email, pass);
-      _suppressAuthListener = false;
-      _otpPending = null;
-
-      // Carrega dados e entra no app
-      window._vp.user = cred.user;
-      await loadUserData(uid);
-      showWelcome(email);
-
-    } catch(e) {
-      err.textContent = 'Erro ao verificar. Tente novamente.';
-    } finally {
-      const btn = document.getElementById('btnVerifyOtp');
-      if (btn) btn.disabled = false;
-    }
-  };
-
-  window.resendOtp = async () => {
-    const err = document.getElementById('otpError');
-    err.textContent = '';
-    if (!_otpPending) { err.textContent = 'Sessão expirada.'; return; }
-    try {
-      document.getElementById('btnResendOtp').disabled = true;
-      const { email, pass, uid } = _otpPending;
-      // Precisa logar temporariamente para atualizar Firestore
-      _suppressAuthListener = true;
-      const cred = await signInWithEmailAndPassword(auth, email, pass);
-      const code    = String(Math.floor(100000 + Math.random() * 900000));
-      const expires = Date.now() + 10 * 60 * 1000;
-      await updateDoc(doc(db, 'users', uid), { otp: { code, expires } });
-      await signOut(auth);
-      _suppressAuthListener = false;
-      await sendOtpEmail(email, code);
-      err.style.color = 'var(--accent3)';
-      err.textContent = '✅ Novo código enviado!';
-      setTimeout(() => { err.textContent = ''; err.style.color = ''; }, 4000);
-    } catch(e) {
-      _suppressAuthListener = false;
-      err.textContent = 'Erro ao reenviar.';
-    } finally {
-      setTimeout(() => {
-        const btn = document.getElementById('btnResendOtp');
-        if (btn) btn.disabled = false;
-      }, 5000);
-    }
-  };
-
-  function setAuthLoading(v) {
-    document.getElementById('btnLogin').disabled    = v;
-    document.getElementById('btnRegister').disabled = v;
-  }
-
-  function translateAuthError(code) {
-    const map = {
-      'auth/email-already-in-use': 'Este email já está cadastrado.',
-      'auth/invalid-email':        'Email inválido.',
-      'auth/weak-password':        'Senha fraca (mín. 6 caracteres).',
-      'auth/user-not-found':       'Usuário não encontrado.',
-      'auth/wrong-password':       'Senha incorreta.',
-      'auth/invalid-credential':   'Email ou senha incorretos.',
-      'auth/too-many-requests':    'Muitas tentativas. Tente mais tarde.',
-    };
-    return map[code] || 'Erro ao autenticar.';
-  }
-
-
-
+  // ── Contagem de detecções ─────────────────────────────────────────────────────
   let _saveTimer = null;
   window.incrementDetection = () => {
     if (window._vp.isPro) return true;
     window._vp.detectionCount++;
+    // Salva localmente (visitante) ou no Firestore (logado free — não existe mais)
+    setLocalCount(window._vp.detectionCount);
     updateFreeBar();
-    // Salva no Firestore com debounce de 3s
-    if (_saveTimer) clearTimeout(_saveTimer);
-    _saveTimer = setTimeout(async () => {
-      try {
-        const ref = doc(db, "users", window._vp.user.uid);
-        await updateDoc(ref, { detectionCount: window._vp.detectionCount });
-      } catch(e) {}
-    }, 3000);
-    if (window._vp.detectionCount >= window._vp.FREE_LIMIT) {
-      stopMic(); showPaywall(); return false;
+    if (window._vp.detectionCount >= FREE_LIMIT) {
+      if (window.stopMic) window.stopMic();
+      showPaywall();
+      return false;
     }
     return true;
   };
 
   function updateFreeBar() {
     if (window._vp.isPro) return;
-    const used = window._vp.detectionCount, max = window._vp.FREE_LIMIT;
+    const used = window._vp.detectionCount, max = FREE_LIMIT;
     const pct  = Math.min(100, (used / max) * 100);
-    document.getElementById('freeBarFill').style.width   = pct + '%';
-    document.getElementById('freeDetCount').textContent  = `${used} / ${max} notas usadas`;
-    document.getElementById('freeBarPct').textContent    = `${Math.round(pct)}% usado`;
-    if (pct >= 80) document.getElementById('freeBarFill').style.background = '#f43f5e';
+    const fill = document.getElementById('freeBarFill');
+    if (fill) { fill.style.width = pct + '%'; if (pct >= 80) fill.style.background = '#f43f5e'; }
+    const cnt = document.getElementById('freeDetCount');
+    if (cnt) cnt.textContent = used + ' / ' + max + ' notas usadas';
+    const pctEl = document.getElementById('freeBarPct');
+    if (pctEl) pctEl.textContent = Math.round(pct) + '% usado';
   }
 
-  window.showPaywall = () => { document.getElementById('paywallOverlay').style.display = 'flex'; };
-  window.hidePaywall = () => {
-    document.getElementById('paywallOverlay').style.display = 'none';
+  window.showPaywall = () => {
+    document.getElementById('paywallOverlay').style.display = 'flex';
     document.getElementById('pixOffer').style.display = 'block';
     document.getElementById('pixQR').style.display    = 'none';
+  };
+  window.hidePaywall = () => {
+    document.getElementById('paywallOverlay').style.display = 'none';
   };
 
   const BACKEND_URL = "https://detector-de-tom.vercel.app/api";
 
   window.startCheckout = async () => {
-    if (!window._vp.user) return;
     const btn = document.getElementById('btnCheckout');
     btn.textContent = 'Gerando Pix...';
     btn.disabled = true;
     try {
+      // Para checkout não precisamos de user ainda
+      const uid = window._vp.user ? window._vp.user.uid : 'guest_' + Date.now();
       const res  = await fetch(`${BACKEND_URL}/create-preference`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid: window._vp.user.uid, email: window._vp.user.email })
+        body: JSON.stringify({ uid, email: window._vp.user?.email || '' })
       });
       const data = await res.json();
       if (data.qr_code) {
@@ -406,7 +258,7 @@
         document.getElementById('pixQR').style.display    = 'block';
         document.getElementById('pixQRImg').src           = `data:image/png;base64,${data.qr_code_base64}`;
         document.getElementById('pixCode').textContent    = data.qr_code;
-        startPolling(data.payment_id);
+        startPolling(data.payment_id, uid);
       } else { alert('Erro ao gerar Pix. Tente novamente.'); }
     } catch(e) { alert('Erro de conexão.'); }
     finally { btn.textContent = 'Pagar com Pix — R$29,90'; btn.disabled = false; }
@@ -417,21 +269,20 @@
     showToast('Código Pix copiado!');
   };
 
-  function startPolling(paymentId) {
+  function startPolling(paymentId, uid) {
     const interval = setInterval(async () => {
       try {
-        const res  = await fetch(`${BACKEND_URL}/check-payment?payment_id=${paymentId}&uid=${window._vp.user.uid}`);
+        const res  = await fetch(`${BACKEND_URL}/check-payment?payment_id=${paymentId}&uid=${uid}`);
         const data = await res.json();
         if (data.approved) {
           clearInterval(interval);
-          window._vp.isPro = true;
-          updatePlanUI();
           hidePaywall();
-          renderHarmonicField();
-          showToast('🎉 Pagamento confirmado! Bem-vindo ao Pro!');
+          // Abre modal de cadastro para criar a conta Pro
+          openRegisterModal();
+          showToast('✅ Pagamento confirmado! Crie sua conta agora.');
         } else {
-          document.getElementById('pixStatus').textContent =
-            data.status === 'pending' ? 'Aguardando pagamento...' : `Status: ${data.status}`;
+          const el = document.getElementById('pixStatus');
+          if (el) el.textContent = data.status === 'pending' ? 'Aguardando pagamento...' : `Status: ${data.status}`;
         }
       } catch(e) {}
     }, 5000);
@@ -514,61 +365,34 @@ body {
 .w-sub  { font-size:0.72rem; color:var(--muted); margin-top:8px; animation:up 0.4s ease 0.35s both; }
 @keyframes up { from{transform:translateY(14px);opacity:0} to{transform:translateY(0);opacity:1} }
 
-/* ── AUTH ───────────────────────────────────────────────────────────────────── */
-#authScreen {
-  display:flex; flex-direction:column; align-items:center;
-  justify-content:center; min-height:100vh;
-  width:100%; max-width:340px; z-index:1;
+/* ── MODAIS (Login / Cadastro) ──────────────────────────────────────────────── */
+.modal-overlay {
+  display:none; position:fixed; inset:0; z-index:200;
+  background:rgba(0,0,0,0.8); backdrop-filter:blur(8px);
+  align-items:center; justify-content:center; padding:16px;
 }
+.modal-overlay.open { display:flex; }
+.modal-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:22px; padding:28px 22px; width:100%; max-width:340px;
+  animation: popIn 0.25s cubic-bezier(0.34,1.3,0.64,1);
+}
+.modal-title { font-family:'Unbounded',sans-serif; font-weight:800; font-size:1rem; color:var(--text); margin-bottom:4px; }
+.modal-sub   { font-size:0.7rem; color:var(--muted); margin-bottom:20px; line-height:1.5; }
 
-.auth-logo-wrap { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
-.auth-logo-img  { width:42px; height:42px; border-radius:12px; object-fit:contain; }
-.auth-logo-text { font-family:'Unbounded',sans-serif; font-weight:800; font-size:1.3rem; letter-spacing:-0.01em; color:var(--text); }
-.auth-tagline   { font-size:0.65rem; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:24px; }
+.form-field       { margin-bottom:13px; }
+.form-field label { display:block; font-size:0.63rem; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:5px; font-weight:600; }
+.form-field input { width:100%; padding:11px 13px; border:1.5px solid var(--border); border-radius:10px; font-family:'Nunito',sans-serif; font-size:0.88rem; color:var(--text); background:var(--surface); outline:none; transition:border-color 0.2s; }
+.form-field input:focus { border-color:var(--accent); }
+.form-field input::placeholder { color:var(--muted); }
 
-.auth-card { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:22px 18px; width:100%; }
+.form-error { font-size:0.7rem; color:var(--accent2); min-height:1.1em; margin-bottom:10px; text-align:center; }
 
-.auth-tabs { display:flex; background:var(--surface); border-radius:9px; padding:3px; margin-bottom:18px; gap:3px; }
-.auth-tab  { flex:1; padding:7px; border:none; border-radius:7px; font-family:'Nunito',sans-serif; font-size:0.76rem; font-weight:600; cursor:pointer; background:transparent; color:var(--muted); transition:all 0.2s; }
-.auth-tab.active { background:var(--card); color:var(--accent); }
-
-.auth-field       { margin-bottom:12px; }
-.auth-field label { display:block; font-size:0.65rem; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:5px; font-weight:500; }
-.auth-field input { width:100%; padding:11px 13px; border:1px solid var(--border); border-radius:9px; font-family:'Nunito',sans-serif; font-size:0.86rem; color:var(--text); background:var(--surface); outline:none; transition:border-color 0.2s; }
-.auth-field input:focus { border-color:var(--accent); }
-.auth-field input::placeholder { color:var(--muted); }
-
-.auth-error { font-size:0.7rem; color:var(--accent2); min-height:1.2em; margin-bottom:8px; text-align:center; }
-
-.btn-primary { width:100%; padding:12px; border:none; border-radius:50px; font-family:'Nunito',sans-serif; font-size:0.84rem; font-weight:600; cursor:pointer; background:var(--accent); color:#fff; transition:opacity 0.2s, transform 0.15s; }
+.btn-primary { width:100%; padding:12px; border:none; border-radius:50px; font-family:'Nunito',sans-serif; font-size:0.84rem; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; transition:opacity 0.2s, transform 0.15s; }
 .btn-primary:hover { opacity:0.88; transform:translateY(-1px); }
 .btn-primary:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
-.btn-primary.secondary { background:var(--surface); color:var(--sub); border:1px solid var(--border); }
-
-.auth-divider { display:flex; align-items:center; gap:10px; margin:12px 0; color:var(--muted); font-size:0.65rem; }
-.auth-divider::before,.auth-divider::after { content:''; flex:1; height:1px; background:var(--border); }
-
-/* ── OTP SCREEN ─────────────────────────────────────────────────────────────── */
-#otpScreen {
-  display:none; flex-direction:column; align-items:center;
-  justify-content:center; min-height:100vh;
-  width:100%; max-width:340px; z-index:1;
-}
-.otp-card { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:28px 20px; width:100%; }
-.otp-icon  { font-size:2rem; text-align:center; margin-bottom:10px; }
-.otp-title { font-family:'Unbounded',sans-serif; font-weight:800; font-size:1rem; color:var(--text); text-align:center; margin-bottom:6px; }
-.otp-sub   { font-size:0.72rem; color:var(--muted); text-align:center; margin-bottom:20px; line-height:1.5; }
-.otp-sub strong { color:var(--accent); }
-.otp-input-wrap { display:flex; justify-content:center; margin-bottom:14px; }
-#otpInput {
-  width:100%; padding:16px; border:2px solid var(--border); border-radius:12px;
-  font-family:'Unbounded',sans-serif; font-size:1.6rem; font-weight:800;
-  color:var(--accent); background:var(--surface); text-align:center;
-  letter-spacing:0.18em; outline:none; transition:border-color 0.2s;
-}
-#otpInput:focus { border-color:var(--accent); }
-.otp-error { font-size:0.7rem; min-height:1.2em; margin-bottom:10px; text-align:center; color:var(--accent2); }
-.otp-back  { display:block; margin:10px auto 0; background:transparent; border:none; color:var(--muted); font-family:'Nunito',sans-serif; font-size:0.7rem; cursor:pointer; text-decoration:underline; }
+.btn-modal-close { width:100%; padding:10px; margin-top:8px; border:1px solid var(--border); border-radius:50px; background:transparent; color:var(--muted); font-family:'Nunito',sans-serif; font-size:0.78rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.btn-modal-close:hover { border-color:var(--accent2); color:var(--accent2); }
 
 /* ── APP ────────────────────────────────────────────────────────────────────── */
 #appScreen { display:none; flex-direction:column; align-items:center; width:100%; max-width:390px; z-index:1; }
@@ -864,53 +688,44 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
   <p class="w-sub">Detector de Tom · Afinador</p>
 </div>
 
-<!-- AUTH -->
-<div id="authScreen">
-  <div class="auth-logo-wrap">
-    <img src="LogoC.png" alt="Logo" class="auth-logo-img" onerror="this.style.display='none'">
-    <div class="auth-logo-text">Detector de Tom</div>
-  </div>
-  <p class="auth-tagline">Notas e tom em tempo real</p>
-  <div class="auth-card">
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tabLogin"    onclick="switchTab('login')">Entrar</button>
-      <button class="auth-tab"        id="tabRegister" onclick="switchTab('register')">Criar conta</button>
-    </div>
-    <div class="auth-field">
+<!-- MODAL LOGIN -->
+<div id="loginModal" class="modal-overlay" onclick="if(event.target===this)closeLoginModal()">
+  <div class="modal-card">
+    <div class="modal-title">Entrar na conta</div>
+    <p class="modal-sub">Acesse com seu email e senha cadastrados.</p>
+    <div class="form-field">
       <label>Email</label>
-      <input type="email" id="authEmail" placeholder="seu@email.com" autocomplete="email">
+      <input type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <div class="auth-field">
+    <div class="form-field">
       <label>Senha</label>
-      <input type="password" id="authPass" placeholder="••••••••" autocomplete="current-password">
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <div class="auth-error" id="authError"></div>
-    <button class="btn-primary" id="btnLogin"    onclick="doLogin()">Entrar</button>
-    <div class="auth-divider">ou</div>
-    <button class="btn-primary secondary" id="btnRegister" onclick="doRegister()" style="display:none">Criar conta grátis</button>
+    <div class="form-error" id="loginError"></div>
+    <button class="btn-primary" id="btnLogin" onclick="doLogin()">Entrar</button>
+    <button class="btn-modal-close" onclick="closeLoginModal()">Cancelar</button>
   </div>
 </div>
 
-<!-- OTP VERIFICATION -->
-<div id="otpScreen">
-  <div class="auth-logo-wrap">
-    <img src="LogoC.png" alt="Logo" class="auth-logo-img" onerror="this.style.display='none'">
-    <div class="auth-logo-text">Detector de Tom</div>
-  </div>
-  <div class="otp-card">
-    <div class="otp-icon">📩</div>
-    <div class="otp-title">Verifique seu email</div>
-    <p class="otp-sub">Enviamos um código de 6 dígitos para<br><strong id="otpEmailLabel"></strong></p>
-    <div class="otp-input-wrap">
-      <input type="number" id="otpInput" placeholder="000000" maxlength="6"
-        oninput="if(this.value.length>6)this.value=this.value.slice(0,6)"
-        onkeydown="if(event.key==='Enter')verifyOtp()">
+<!-- MODAL CADASTRO (só após pagamento) -->
+<div id="registerModal" class="modal-overlay" onclick="if(event.target===this)closeRegisterModal()">
+  <div class="modal-card">
+    <div class="modal-title">🎉 Criar conta Pro</div>
+    <p class="modal-sub">Pagamento confirmado! Agora crie sua conta para acessar tudo.</p>
+    <div class="form-field">
+      <label>Nome</label>
+      <input type="text" id="regNome" placeholder="Seu nome" autocomplete="name">
     </div>
-    <div class="otp-error" id="otpError"></div>
-    <button class="btn-primary" id="btnVerifyOtp" onclick="verifyOtp()">Verificar código</button>
-    <div class="auth-divider">ou</div>
-    <button class="btn-primary secondary" id="btnResendOtp" onclick="resendOtp()">Reenviar código</button>
-    <button class="otp-back" onclick="showAuth()">← Voltar ao login</button>
+    <div class="form-field">
+      <label>Email</label>
+      <input type="email" id="regEmail" placeholder="seu@email.com" autocomplete="email">
+    </div>
+    <div class="form-field">
+      <label>Senha</label>
+      <input type="password" id="regPass" placeholder="mín. 6 caracteres" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegisterAfterPayment()">
+    </div>
+    <div class="form-error" id="regError"></div>
+    <button class="btn-primary" id="btnRegisterFinal" onclick="doRegisterAfterPayment()">Criar minha conta Pro</button>
   </div>
 </div>
 
@@ -923,8 +738,9 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
     </div>
     <div class="topbar-right">
       <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Alternar tema">🌙</button>
-      <span class="plan-badge free" id="planBadge">FREE</span>
-      <button class="btn-icon" onclick="doLogout()">Sair</button>
+      <span class="plan-badge free" id="planBadge">TESTE</span>
+      <button class="btn-icon" id="topbarLoginBtn"  onclick="openLoginModal()" style="display:none">Entrar</button>
+      <button class="btn-icon" id="topbarLogoutBtn" onclick="doLogout()"       style="display:none">Sair</button>
     </div>
   </div>
 
@@ -933,11 +749,11 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
     <div class="free-plan-card">
       <div class="fpc-top">
         <div class="fpc-info">
-          <div class="fpc-title">Plano Free</div>
-          <div class="fpc-count" id="freeDetCount">0 / 600 notas usadas</div>
+          <div class="fpc-title">Modo Teste</div>
+          <div class="fpc-count" id="freeDetCount">0 / 1000 notas usadas</div>
           <div class="fpc-limits">
             <div class="fpc-limit blocked">Campo Harmônico bloqueado</div>
-            <div class="fpc-limit blocked">Limitado a 1000 detecções</div>
+            <div class="fpc-limit blocked">Sem cadastro necessário</div>
           </div>
         </div>
         <button class="upgrade-btn" onclick="showPaywall()">
@@ -1154,14 +970,7 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 <div id="toast"></div>
 
 <script>
-function switchTab(tab) {
-  const L=tab==='login';
-  document.getElementById('tabLogin').className    ='auth-tab'+(L?' active':'');
-  document.getElementById('tabRegister').className ='auth-tab'+(!L?' active':'');
-  document.getElementById('btnLogin').style.display    =L?'block':'none';
-  document.getElementById('btnRegister').style.display =L?'none':'block';
-  document.getElementById('authError').textContent='';
-}
+
 
 function switchTab2(tab) {
   const tabs = ['detector','harmonico','notas'];

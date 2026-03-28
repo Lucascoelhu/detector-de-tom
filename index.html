@@ -111,7 +111,8 @@
     try {
       setAuthLoading(true);
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
-      await sendEmailVerification(cred.user);
+      const actionSettings = { url: window.location.href, handleCodeInApp: false };
+      await sendEmailVerification(cred.user, actionSettings);
       await signOut(auth);
       err.style.color = '#10b981';
       err.textContent = '✅ Cadastro realizado! Verifique seu email para ativar a conta.';
@@ -144,7 +145,7 @@
     finally  { setAuthLoading(false); }
   };
 
-  window.doLogout = async () => { stopMic(); await signOut(auth); };
+  window.doLogout = async () => { if (window.stopMic) window.stopMic(); await signOut(auth); };
 
   function setAuthLoading(v) {
     document.getElementById('btnLogin').disabled    = v;
@@ -170,7 +171,8 @@
     if (!btn || !btn._email || !btn._pass) return;
     try {
       const cred = await signInWithEmailAndPassword(auth, btn._email, btn._pass);
-      await sendEmailVerification(cred.user);
+      const actionSettings = { url: window.location.href, handleCodeInApp: false };
+      await sendEmailVerification(cred.user, actionSettings);
       await signOut(auth);
       err.style.color = '#10b981';
       err.textContent = '✅ Email reenviado! Verifique sua caixa de entrada.';
@@ -1175,6 +1177,7 @@ async function startMic(){
 }
 
 function stopMic(){
+  window.stopMic = stopMic;
   running=false;if(animFrame)cancelAnimationFrame(animFrame);
   if(micStream)micStream.getTracks().forEach(t=>t.stop());if(audioCtx)audioCtx.close();
   document.getElementById('startBtn').innerHTML='<span class="pulse-dot"></span>Iniciar Microfone';

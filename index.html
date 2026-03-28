@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Detector de Tom</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Unbounded:wght@700;800;900&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script>emailjs.init('QIsqMqd5iYKVduzZ2');</script>
+
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -61,7 +60,20 @@
   });
 
   async function sendOtpEmail(email, code) {
-    await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, { email, code }, EJS_KEY);
+    const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id:  EJS_SERVICE,
+        template_id: EJS_TEMPLATE,
+        user_id:     EJS_KEY,
+        template_params: { email, code }
+      })
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error('EmailJS error ' + res.status + ': ' + text);
+    }
   }
 
   async function loadUserData(uid) {

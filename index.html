@@ -28,6 +28,10 @@
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
+      if (!user.emailVerified) {
+        await signOut(auth);
+        return;
+      }
       window._vp.user = user;
       await loadUserData(user.uid);
       showWelcome(user.email);

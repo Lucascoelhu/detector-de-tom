@@ -153,29 +153,49 @@
       setAuthLoading(true);
       _suppressAuthListener = true;
 
-      // Cria conta no Firebase Auth
-      const cred = await createUserWithEmailAndPassword(auth, email, pass);
-      const uid  = cred.user.uid;
+      let uid;
 
-      // Gera código OTP 6 dígitos
+      try {
+        // Tenta criar conta nova
+        const cred = await createUserWithEmailAndPassword(auth, email, pass);
+        uid = cred.user.uid;
+        // Cria documento no Firestore
+        await setDoc(doc(db, 'users', uid), {
+          plan: 'free', detectionCount: 0, createdAt: new Date(),
+          emailVerified: false, otp: {}
+        });
+      } catch(createErr) {
+        if (createErr.code === 'auth/email-already-in-use') {
+          // Conta já existe — faz login para pegar o UID
+          const cred2 = await signInWithEmailAndPassword(auth, email, pass);
+          uid = cred2.user.uid;
+          // Verifica se já está verificado
+          const snap = await getDoc(doc(db, 'users', uid));
+          if (snap.exists() && snap.data().emailVerified) {
+            await signOut(auth);
+            _suppressAuthListener = false;
+            err.textContent = 'Este email já está cadastrado. Use "Entrar".';
+            setAuthLoading(false);
+            return;
+          }
+          // Não verificado ainda — continua para mandar OTP
+          await signOut(auth);
+        } else {
+          throw createErr;
+        }
+      }
+
+      // Gera OTP e salva
       const code    = String(Math.floor(100000 + Math.random() * 900000));
-      const expires = Date.now() + 10 * 60 * 1000; // 10 min
+      const expires = Date.now() + 10 * 60 * 1000;
+      await setDoc(doc(db, 'users', uid), { otp: { code, expires } }, { merge: true });
 
-      // Salva no Firestore como NÃO verificado ainda
-      await setDoc(doc(db, 'users', uid), {
-        plan: 'free', detectionCount: 0, createdAt: new Date(),
-        emailVerified: false,
-        otp: { code, expires }
-      });
-
-      // Envia código por email via EmailJS
+      // Envia por email
       await sendOtpEmail(email, code);
 
-      // Faz logout para não entrar no app ainda
-      await signOut(auth);
+      await signOut(auth).catch(()=>{});
       _suppressAuthListener = false;
 
-      // Guarda estado pendente e mostra tela de OTP
       _otpPending = { email, pass, uid };
       showOtpScreen(email, 'register');
 
@@ -213,7 +233,8 @@
       await signOut(auth);
       const code    = String(Math.floor(100000 + Math.random() * 900000));
       const expires = Date.now() + 10 * 60 * 1000;
-      await updateDoc(doc(db, 'users', uid), { otp: { code, expires } });
+      // setDoc com merge para caso não exista ainda
+      await setDoc(doc(db, 'users', uid), { otp: { code, expires } }, { merge: true });
       await sendOtpEmail(email, code);
       _suppressAuthListener = false;
 

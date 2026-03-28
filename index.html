@@ -26,10 +26,17 @@
 
   window._vp = { auth, db, user: null, isPro: false, detectionCount: 0, FREE_LIMIT: 1000 };
 
+  // Flag para ignorar o listener durante fluxos de registro/login manual
+  let _suppressAuthListener = false;
+
   onAuthStateChanged(auth, async (user) => {
+    if (_suppressAuthListener) return;
     if (user) {
       if (!user.emailVerified) {
+        _suppressAuthListener = true;
         await signOut(auth);
+        _suppressAuthListener = false;
+        showAuth();
         return;
       }
       window._vp.user = user;
@@ -114,14 +121,22 @@
     if (!email || !pass) { err.textContent = 'Preencha email e senha.'; return; }
     try {
       setAuthLoading(true);
+      _suppressAuthListener = true;
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
       const actionSettings = { url: window.location.href, handleCodeInApp: false };
       await sendEmailVerification(cred.user, actionSettings);
       await signOut(auth);
+      _suppressAuthListener = false;
       err.style.color = '#10b981';
       err.textContent = '✅ Cadastro realizado! Verifique seu email para ativar a conta.';
+      // Troca para aba de login automaticamente
+      if (typeof switchTab === 'function') switchTab('login');
     }
-    catch(e) { err.style.color = ''; err.textContent = translateAuthError(e.code); }
+    catch(e) {
+      _suppressAuthListener = false;
+      err.style.color = '';
+      err.textContent = translateAuthError(e.code);
+    }
     finally  { setAuthLoading(false); }
   };
 
@@ -134,18 +149,24 @@
     if (!email || !pass) { err.textContent = 'Preencha email e senha.'; return; }
     try {
       setAuthLoading(true);
+      _suppressAuthListener = true;
       const cred = await signInWithEmailAndPassword(auth, email, pass);
       if (!cred.user.emailVerified) {
         await signOut(auth);
+        _suppressAuthListener = false;
         err.textContent = '📧 Confirme seu email antes de entrar. Verifique sua caixa de entrada.';
-        // Botão para reenviar
         const resendBtn = document.getElementById('btnResend');
         if (resendBtn) { resendBtn._email = email; resendBtn._pass = pass; resendBtn.style.display = 'block'; }
         return;
       }
+      // Email verificado — deixa o onAuthStateChanged assumir
+      _suppressAuthListener = false;
       document.getElementById('btnResend') && (document.getElementById('btnResend').style.display = 'none');
     }
-    catch(e) { err.textContent = translateAuthError(e.code); }
+    catch(e) {
+      _suppressAuthListener = false;
+      err.textContent = translateAuthError(e.code);
+    }
     finally  { setAuthLoading(false); }
   };
 

@@ -28,8 +28,9 @@
   const db   = getFirestore(app);
 
   // ── Constantes ────────────────────────────────────────────────────────────────
-  const FREE_LIMIT = 1000;
-  const LS_KEY     = 'dectTom_detections'; // localStorage key
+  const FREE_LIMIT    = 1000;
+  const LS_KEY        = 'dectTom_detections';  // contagem de detecções
+  const LS_PAY_KEY    = 'dectTom_pendingPay';  // payment_id pendente após pagamento
 
   // ── Estado global ─────────────────────────────────────────────────────────────
   window._vp = { auth, db, user: null, isPro: false, detectionCount: 0, FREE_LIMIT };
@@ -58,6 +59,12 @@
       window._vp.isPro = false;
       window._vp.detectionCount = getLocalCount();
       showApp();
+      // Se tem pagamento aprovado pendente, reabre modal de cadastro automaticamente
+      const pendingPay = localStorage.getItem(LS_PAY_KEY);
+      if (pendingPay) {
+        window._vp._pendingPaymentId = pendingPay;
+        setTimeout(() => openRegisterModal(), 600);
+      }
     }
   });
 
@@ -99,6 +106,7 @@
       window._vp.detectionCount    = 0;
       window._vp._pendingPaymentId = null;
       localStorage.removeItem(LS_KEY);
+      localStorage.removeItem(LS_PAY_KEY);
       closeRegisterModal();
       updatePlanUI();
       updateFreeBar();
@@ -310,8 +318,9 @@
         const data = await res.json();
         if (data.approved) {
           clearInterval(interval);
-          // Guarda payment_id para vincular ao cadastro
+          // Guarda payment_id em memória e localStorage (sobrevive a reload)
           window._vp._pendingPaymentId = paymentId;
+          localStorage.setItem(LS_PAY_KEY, paymentId);
           hidePaywall();
           openRegisterModal();
           showToast('✅ Pagamento confirmado! Crie sua conta agora.');

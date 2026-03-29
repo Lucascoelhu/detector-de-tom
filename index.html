@@ -1834,8 +1834,10 @@ const CHORD_SHAPES = {
 let _chordVoicing = 0;
 
 // ── Desenha diagrama SVG de violão ────────────────────────────────────────────
-// Mostra NÚMERO DO DEDO (1=indicador…4=mínimo) em vez da casa.
-// Label de posição destacado quando não é posição aberta.
+// • Número do dedo nos círculos (1=indicador … 4=mínimo)
+// • Badge de posição destacado para cordas não-abertas
+// • Nota de cada corda em português abaixo do grid
+// • X de mudo desenhado via path (sem bug de emoji/encoding)
 function drawChordDiagram(svgEl, rootName, quality, voicingIdx) {
   const COMPAT = { 'Maior':'M', 'Menor':'m', 'Dim':'d' };
   const qKey = COMPAT[quality] || quality;
@@ -1843,21 +1845,25 @@ function drawChordDiagram(svgEl, rootName, quality, voicingIdx) {
 
   svgEl.innerHTML = '';
 
-  const W=200, H=230;
+  // Altura extra para a linha de notas abaixo
+  const W=200, H=260;
   svgEl.setAttribute('viewBox', `0 0 ${W} ${H}`);
 
   const marginL=36, marginT=54, strW=24, fretH=30, nStr=6, nFret=5;
   const gridW = strW * (nStr - 1);
   const gridH = fretH * nFret;
+  const noteRowY = marginT + gridH + 22; // Y da linha de notas
 
   const isLight = document.documentElement.classList.contains('light');
-  const colLine = isLight ? '#c0c0d8' : '#343450';
-  const colText = isLight ? '#5a5a80' : '#9898b8';
-  const colDot  = '#6c63ff';
-  const colMute = isLight ? '#a0a0b8' : '#666688';
-  const colNut  = isLight ? '#181828' : '#eeeeff';
-  const colBg   = isLight ? '#ffffff' : '#1a1a28';
-  const colFret = isLight ? '#3730a3' : '#a5b4fc'; // cor destaque posição
+  const colLine  = isLight ? '#c0c0d8' : '#343450';
+  const colText  = isLight ? '#5a5a80' : '#9898b8';
+  const colDot   = '#6c63ff';
+  const colMute  = isLight ? '#b0b0c8' : '#555570';
+  const colNut   = isLight ? '#181828' : '#eeeeff';
+  const colBg    = isLight ? '#ffffff' : '#1a1a28';
+  const colFret  = isLight ? '#3730a3' : '#a5b4fc';
+  const colNote  = isLight ? '#4f46e5' : '#818cf8';
+  const colOpen  = isLight ? '#059669' : '#34d399'; // verde para cordas soltas
 
   const ns = 'http://www.w3.org/2000/svg';
   const mk = (tag, attrs, txt) => {
@@ -1865,6 +1871,13 @@ function drawChordDiagram(svgEl, rootName, quality, voicingIdx) {
     Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k, String(v)));
     if (txt !== undefined) el.textContent = txt;
     return el;
+  };
+
+  // X de mudo via path (evita bug de encoding de caractere)
+  const drawX = (cx, cy, size, col) => {
+    const h = size / 2;
+    svgEl.appendChild(mk('line', { x1:cx-h, y1:cy-h, x2:cx+h, y2:cy+h, stroke:col, 'stroke-width':'2', 'stroke-linecap':'round' }));
+    svgEl.appendChild(mk('line', { x1:cx+h, y1:cy-h, x2:cx-h, y2:cy+h, stroke:col, 'stroke-width':'2', 'stroke-linecap':'round' }));
   };
 
   // Fundo
@@ -1880,131 +1893,136 @@ function drawChordDiagram(svgEl, rootName, quality, voicingIdx) {
   const [fretBase, frets] = shapeSet[vi === 0 ? 'v1' : 'v2'];
   const showNut = fretBase === 1;
 
-  // ── Label de posição destacado (badge) ──────────────────────────────────────
+  // ── Badge de posição ────────────────────────────────────────────────────────
   if (!showNut) {
-    // Pílula colorida com "Nª casa"
-    const badgeW = 44, badgeH = 18, badgeX = marginL - badgeW - 6, badgeY = marginT + fretH * 0.5 - badgeH / 2;
-    svgEl.appendChild(mk('rect', {
-      x: badgeX, y: badgeY, width: badgeW, height: badgeH,
-      rx: '9', fill: colDot, opacity: '0.18'
-    }));
-    svgEl.appendChild(mk('rect', {
-      x: badgeX, y: badgeY, width: badgeW, height: badgeH,
-      rx: '9', fill: 'none', stroke: colDot, 'stroke-width': '1.2', opacity: '0.7'
-    }));
+    const bW=38, bH=17, bX=marginL-bW-5, bY=marginT+fretH*0.5-bH/2;
+    svgEl.appendChild(mk('rect', { x:bX, y:bY, width:bW, height:bH, rx:'8', fill:colDot, opacity:'0.15' }));
+    svgEl.appendChild(mk('rect', { x:bX, y:bY, width:bW, height:bH, rx:'8', fill:'none', stroke:colDot, 'stroke-width':'1.2', opacity:'0.6' }));
     svgEl.appendChild(mk('text', {
-      x: badgeX + badgeW / 2, y: badgeY + badgeH / 2 + 4,
-      'text-anchor': 'middle', 'font-size': '9', fill: colFret,
-      'font-family': 'Nunito,sans-serif', 'font-weight': '800'
-    }, fretBase + 'ª'));
+      x:bX+bW/2, y:bY+bH/2+4, 'text-anchor':'middle',
+      'font-size':'9', fill:colFret, 'font-family':'Nunito,sans-serif', 'font-weight':'800'
+    }, fretBase + 'a'));
   }
 
   // ── Cordas verticais ────────────────────────────────────────────────────────
   for (let s = 0; s < nStr; s++) {
     const x = marginL + s * strW;
-    svgEl.appendChild(mk('line', {
-      x1:x, y1:marginT, x2:x, y2:marginT + gridH,
-      stroke:colLine, 'stroke-width':'1.5'
-    }));
+    svgEl.appendChild(mk('line', { x1:x, y1:marginT, x2:x, y2:marginT+gridH, stroke:colLine, 'stroke-width':'1.5' }));
   }
 
   // ── Casas horizontais ───────────────────────────────────────────────────────
   for (let f = 0; f <= nFret; f++) {
     const y = marginT + f * fretH;
     svgEl.appendChild(mk('line', {
-      x1:marginL, y1:y, x2:marginL + gridW, y2:y,
-      stroke: (showNut && f === 0) ? colNut : colLine,
-      'stroke-width': (showNut && f === 0) ? '5' : '1.5'
+      x1:marginL, y1:y, x2:marginL+gridW, y2:y,
+      stroke: (showNut && f===0) ? colNut : colLine,
+      'stroke-width': (showNut && f===0) ? '5' : '1.5'
     }));
   }
 
-  // ── Labels de corda ─────────────────────────────────────────────────────────
-  const strNames = ['E','A','D','G','B','e'];
-  strNames.forEach((s, i) => {
+  // ── Labels de corda (E A D G B e) ───────────────────────────────────────────
+  ['E','A','D','G','B','e'].forEach((s, i) => {
     svgEl.appendChild(mk('text', {
-      x: marginL + i * strW, y: marginT - 28,
-      'text-anchor':'middle', 'font-size':'9', 'fill':colText,
-      'font-family':'Nunito,sans-serif'
+      x:marginL+i*strW, y:marginT-28,
+      'text-anchor':'middle', 'font-size':'9', 'fill':colText, 'font-family':'Nunito,sans-serif'
     }, s));
   });
 
-  // ── Atribuição de números de dedo ───────────────────────────────────────────
-  // Ordena as casas pressionadas (excluindo barré) do menor para maior fret
-  // e atribui dedo 1 (menor casa) … dedo 4 (maior casa).
-  // Cordas com o mesmo fret que o barré recebem dedo 1.
-  const pressedList = frets
-    .map((f, si) => ({ f, si }))
-    .filter(o => o.f > 0);
+  // ── Cálculo de notas por corda ───────────────────────────────────────────────
+  // Afinação padrão: E2 A2 D3 G3 B3 e4 → índices cromáticos
+  const openNotes = [4, 9, 2, 7, 11, 4]; // E=4 A=9 D=2 G=7 B=11 e=4
+  const notesPT   = ['Dó','Dó#','Ré','Ré#','Mi','Fá','Fá#','Sol','Sol#','Lá','Lá#','Si'];
 
-  // Detecta barré: menor fret com ≥2 cordas consecutivas sem mudo entre elas
+  // ── Detecção de barré ────────────────────────────────────────────────────────
+  const pressedList = frets.map((f,si)=>({f,si})).filter(o=>o.f>0);
   let barreFret = -1;
   if (pressedList.length > 0) {
-    const minFret = Math.min(...pressedList.map(o => o.f));
-    const barIdx  = pressedList.filter(o => o.f === minFret).map(o => o.si);
+    const minFret = Math.min(...pressedList.map(o=>o.f));
+    const barIdx  = pressedList.filter(o=>o.f===minFret).map(o=>o.si);
     if (barIdx.length >= 2) {
-      const first = barIdx[0], last = barIdx[barIdx.length - 1];
-      let clean = true;
-      for (let si = first; si <= last; si++) { if (frets[si] === -1) { clean = false; break; } }
+      const first=barIdx[0], last=barIdx[barIdx.length-1];
+      let clean=true;
+      for (let si=first; si<=last; si++) { if (frets[si]===-1){clean=false;break;} }
       if (clean) barreFret = minFret;
     }
   }
 
   // Mapa fret → número do dedo
-  // Barré = dedo 1; restantes ordenados crescentemente = dedos 2, 3, 4
-  const uniqueFrets = [...new Set(pressedList.map(o => o.f))].sort((a,b) => a - b);
+  const uniqueFrets = [...new Set(pressedList.map(o=>o.f))].sort((a,b)=>a-b);
   const fingerMap = {};
   let nextFinger = barreFret >= 0 ? 2 : 1;
   uniqueFrets.forEach(f => {
-    if (f === barreFret) { fingerMap[f] = 1; }
-    else { fingerMap[f] = nextFinger++; }
+    if (f === barreFret) fingerMap[f] = 1;
+    else fingerMap[f] = nextFinger++;
   });
 
-  // ── Desenha barré ───────────────────────────────────────────────────────────
+  // ── Barré ────────────────────────────────────────────────────────────────────
   if (barreFret >= 0) {
-    const barIdx = pressedList.filter(o => o.f === barreFret).map(o => o.si);
-    const first = barIdx[0], last = barIdx[barIdx.length - 1];
+    const barIdx = pressedList.filter(o=>o.f===barreFret).map(o=>o.si);
+    const first=barIdx[0], last=barIdx[barIdx.length-1];
     const barRow = barreFret - fretBase;
-    const barY   = marginT + barRow * fretH + fretH / 2;
-    const x1 = marginL + first * strW;
-    const x2 = marginL + last  * strW;
-    svgEl.appendChild(mk('rect', {
-      x: x1 - 11, y: barY - 10,
-      width: (x2 - x1) + 22, height: 20,
-      rx:'10', fill:colDot, opacity:'0.9'
-    }));
-    // Número "1" no centro do barré
+    const barY   = marginT + barRow*fretH + fretH/2;
+    const x1=marginL+first*strW, x2=marginL+last*strW;
+    svgEl.appendChild(mk('rect', { x:x1-11, y:barY-10, width:(x2-x1)+22, height:20, rx:'10', fill:colDot, opacity:'0.92' }));
     svgEl.appendChild(mk('text', {
-      x: (x1 + x2) / 2, y: barY + 4,
-      'text-anchor':'middle', 'font-size':'10', 'fill':'#fff',
-      'font-family':'Nunito,sans-serif', 'font-weight':'800'
+      x:(x1+x2)/2, y:barY+4, 'text-anchor':'middle',
+      'font-size':'10', fill:'#fff', 'font-family':'Nunito,sans-serif', 'font-weight':'800'
     }, '1'));
   }
 
-  // ── Pontos individuais, X e O ───────────────────────────────────────────────
-  const xoY = marginT - 16;
+  // ── Pontos, X e O ────────────────────────────────────────────────────────────
+  const xoY = marginT - 15;
   frets.forEach((f, si) => {
     const x = marginL + si * strW;
     if (f === -1) {
-      svgEl.appendChild(mk('text', {
-        x, y: xoY,
-        'text-anchor':'middle', 'font-size':'13', 'fill':colMute,
-        'font-family':'Arial,sans-serif', 'font-weight':'700'
-      }, '×'));
+      drawX(x, xoY - 2, 9, colMute);
     } else if (f === 0) {
-      svgEl.appendChild(mk('circle', {
-        cx:x, cy: xoY - 5, r:'5',
-        fill:'none', stroke:colDot, 'stroke-width':'1.8'
-      }));
+      svgEl.appendChild(mk('circle', { cx:x, cy:xoY-4, r:'5', fill:'none', stroke:colOpen, 'stroke-width':'1.8' }));
     } else if (f !== barreFret) {
-      // Dedo individual (não é barré)
       const row = f - fretBase;
-      const cy  = marginT + row * fretH + fretH / 2;
-      svgEl.appendChild(mk('circle', {cx:x, cy, r:'11', fill:colDot}));
+      const cy  = marginT + row*fretH + fretH/2;
+      svgEl.appendChild(mk('circle', { cx:x, cy, r:'11', fill:colDot }));
       svgEl.appendChild(mk('text', {
-        x, y: cy + 4,
-        'text-anchor':'middle', 'font-size':'10', 'fill':'#fff',
-        'font-family':'Nunito,sans-serif', 'font-weight':'800'
+        x, y:cy+4, 'text-anchor':'middle',
+        'font-size':'10', fill:'#fff', 'font-family':'Nunito,sans-serif', 'font-weight':'800'
       }, String(fingerMap[f] || '')));
+    }
+  });
+
+  // ── Linha de notas por corda ─────────────────────────────────────────────────
+  // Separador sutil
+  svgEl.appendChild(mk('line', {
+    x1:marginL-4, y1:noteRowY-12, x2:marginL+gridW+4, y2:noteRowY-12,
+    stroke:colLine, 'stroke-width':'0.8', 'stroke-dasharray':'3,3'
+  }));
+
+  frets.forEach((f, si) => {
+    const x = marginL + si * strW;
+    if (f === -1) {
+      // Corda muda — traço
+      drawX(x, noteRowY - 1, 7, colMute);
+    } else {
+      const noteIdx = (openNotes[si] + f + 12) % 12;
+      const noteName = notesPT[noteIdx];
+      // Quebra nome em duas linhas se tiver # (Dó# → Dó + #)
+      const hasSharp = noteName.includes('#');
+      const baseName = hasSharp ? noteName.replace('#','') : noteName;
+
+      // Destaque: corda solta = verde, pressionada = roxo
+      const col = f === 0 ? colOpen : colNote;
+      const fw  = f === 0 ? '600' : '700';
+
+      if (hasSharp) {
+        svgEl.appendChild(mk('text', {
+          x, y:noteRowY+2, 'text-anchor':'middle',
+          'font-size':'8.5', fill:col, 'font-family':'Nunito,sans-serif', 'font-weight':fw
+        }, baseName + '#'));
+      } else {
+        svgEl.appendChild(mk('text', {
+          x, y:noteRowY+3, 'text-anchor':'middle',
+          'font-size':'9', fill:col, 'font-family':'Nunito,sans-serif', 'font-weight':fw
+        }, baseName));
+      }
     }
   });
 }

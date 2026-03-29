@@ -1747,7 +1747,7 @@ const CHORD_SHAPES = {
   'F': {
     M:    { v1:[1,[1,3,3,2,1,1]],    v2:[8,[8,8,10,10,10,8]]  },
     m:    { v1:[1,[1,3,3,1,1,1]],    v2:[8,[8,8,10,10,9,8]]   },
-    d:    { v1:[1,[1,2,3,4,3,-1]],   v2:[7,[7,8,9,10,9,-1]]   },
+    d:    { v1:[1,[-1,-1,1,2,1,-1]], v2:[7,[7,8,9,10,9,-1]]   },
     '7':  { v1:[1,[1,3,1,2,1,1]],    v2:[8,[8,8,10,8,10,8]]   },
     '7M': { v1:[1,[-1,3,3,2,1,0]],   v2:[8,[8,8,10,9,10,8]]   },
     'm7': { v1:[1,[1,3,1,1,1,1]],    v2:[8,[8,8,10,8,9,8]]    },
@@ -1833,9 +1833,9 @@ const CHORD_SHAPES = {
 // Índice da posição mostrada (0=v1, 1=v2)
 let _chordVoicing = 0;
 
-// ── Desenha diagrama SVG de violão — versão 100% corrigida ───────────────────
-// quality pode ser: chave interna ('M','m','d','7','7M','m7','9','sus2','sus4','/X')
-//                   OU nome antigo ('Maior','Menor','Dim') — compatibilidade
+// ── Desenha diagrama SVG de violão ────────────────────────────────────────────
+// Mostra NÚMERO DO DEDO (1=indicador…4=mínimo) em vez da casa.
+// Label de posição destacado quando não é posição aberta.
 function drawChordDiagram(svgEl, rootName, quality, voicingIdx) {
   const COMPAT = { 'Maior':'M', 'Menor':'m', 'Dim':'d' };
   const qKey = COMPAT[quality] || quality;
@@ -1847,8 +1847,8 @@ function drawChordDiagram(svgEl, rootName, quality, voicingIdx) {
   svgEl.setAttribute('viewBox', `0 0 ${W} ${H}`);
 
   const marginL=36, marginT=54, strW=24, fretH=30, nStr=6, nFret=5;
-  const gridW = strW * (nStr - 1);  // 120
-  const gridH = fretH * nFret;       // 150
+  const gridW = strW * (nStr - 1);
+  const gridH = fretH * nFret;
 
   const isLight = document.documentElement.classList.contains('light');
   const colLine = isLight ? '#c0c0d8' : '#343450';
@@ -1857,6 +1857,7 @@ function drawChordDiagram(svgEl, rootName, quality, voicingIdx) {
   const colMute = isLight ? '#a0a0b8' : '#666688';
   const colNut  = isLight ? '#181828' : '#eeeeff';
   const colBg   = isLight ? '#ffffff' : '#1a1a28';
+  const colFret = isLight ? '#3730a3' : '#a5b4fc'; // cor destaque posição
 
   const ns = 'http://www.w3.org/2000/svg';
   const mk = (tag, attrs, txt) => {
@@ -1875,20 +1876,27 @@ function drawChordDiagram(svgEl, rootName, quality, voicingIdx) {
     return;
   }
 
-  // Seleciona voicing
   const vi = (voicingIdx !== undefined ? voicingIdx : _chordVoicing);
   const [fretBase, frets] = shapeSet[vi === 0 ? 'v1' : 'v2'];
-
-  // Pestana grossa só quando fretBase === 1
   const showNut = fretBase === 1;
 
-  // ── Label de posição ────────────────────────────────────────────────────────
+  // ── Label de posição destacado (badge) ──────────────────────────────────────
   if (!showNut) {
+    // Pílula colorida com "Nª casa"
+    const badgeW = 44, badgeH = 18, badgeX = marginL - badgeW - 6, badgeY = marginT + fretH * 0.5 - badgeH / 2;
+    svgEl.appendChild(mk('rect', {
+      x: badgeX, y: badgeY, width: badgeW, height: badgeH,
+      rx: '9', fill: colDot, opacity: '0.18'
+    }));
+    svgEl.appendChild(mk('rect', {
+      x: badgeX, y: badgeY, width: badgeW, height: badgeH,
+      rx: '9', fill: 'none', stroke: colDot, 'stroke-width': '1.2', opacity: '0.7'
+    }));
     svgEl.appendChild(mk('text', {
-      x: marginL - 5, y: marginT + fretH * 0.7,
-      'text-anchor':'end', 'font-size':'10', 'fill':colText,
-      'font-family':'Nunito,sans-serif', 'font-weight':'700'
-    }, fretBase + 'fr'));
+      x: badgeX + badgeW / 2, y: badgeY + badgeH / 2 + 4,
+      'text-anchor': 'middle', 'font-size': '9', fill: colFret,
+      'font-family': 'Nunito,sans-serif', 'font-weight': '800'
+    }, fretBase + 'ª'));
   }
 
   // ── Cordas verticais ────────────────────────────────────────────────────────
@@ -1906,7 +1914,7 @@ function drawChordDiagram(svgEl, rootName, quality, voicingIdx) {
     svgEl.appendChild(mk('line', {
       x1:marginL, y1:y, x2:marginL + gridW, y2:y,
       stroke: (showNut && f === 0) ? colNut : colLine,
-      'stroke-width': (showNut && f === 0) ? '4' : '1.5'
+      'stroke-width': (showNut && f === 0) ? '5' : '1.5'
     }));
   }
 
@@ -1915,68 +1923,88 @@ function drawChordDiagram(svgEl, rootName, quality, voicingIdx) {
   strNames.forEach((s, i) => {
     svgEl.appendChild(mk('text', {
       x: marginL + i * strW, y: marginT - 28,
-      'text-anchor':'middle', 'font-size':'9', 'fill':colText, 'font-family':'Nunito,sans-serif'
+      'text-anchor':'middle', 'font-size':'9', 'fill':colText,
+      'font-family':'Nunito,sans-serif'
     }, s));
   });
 
-  // ── Detecção de barré ───────────────────────────────────────────────────────
-  // Só considera cordas NÃO-mudas para detectar barré
-  // Barré = mesma casa em ≥2 cordas consecutivas (sem -1 entre elas no span)
-  const pressedFrets = frets.filter(f => f > 0);
-  if (pressedFrets.length > 0) {
-    const barFret = Math.min(...pressedFrets);
-    // Índices das cordas com esse fret (apenas não-mudas)
-    const barIdx = frets.reduce((acc, f, si) => { if (f === barFret) acc.push(si); return acc; }, []);
+  // ── Atribuição de números de dedo ───────────────────────────────────────────
+  // Ordena as casas pressionadas (excluindo barré) do menor para maior fret
+  // e atribui dedo 1 (menor casa) … dedo 4 (maior casa).
+  // Cordas com o mesmo fret que o barré recebem dedo 1.
+  const pressedList = frets
+    .map((f, si) => ({ f, si }))
+    .filter(o => o.f > 0);
 
+  // Detecta barré: menor fret com ≥2 cordas consecutivas sem mudo entre elas
+  let barreFret = -1;
+  if (pressedList.length > 0) {
+    const minFret = Math.min(...pressedList.map(o => o.f));
+    const barIdx  = pressedList.filter(o => o.f === minFret).map(o => o.si);
     if (barIdx.length >= 2) {
       const first = barIdx[0], last = barIdx[barIdx.length - 1];
-      // Verifica se nenhuma corda ENTRE first e last é muda (-1)
-      let spanClean = true;
-      for (let si = first; si <= last; si++) {
-        if (frets[si] === -1) { spanClean = false; break; }
-      }
-      if (spanClean && (last - first) >= 1) {
-        const barRow = barFret - fretBase; // 0-based
-        const barY   = marginT + barRow * fretH + fretH / 2;
-        const x1 = marginL + first * strW;
-        const x2 = marginL + last  * strW;
-        // Cápsula de barré
-        svgEl.appendChild(mk('rect', {
-          x: x1 - 11, y: barY - 10,
-          width: (x2 - x1) + 22, height: 20,
-          rx:'10', fill:colDot, opacity:'0.9'
-        }));
-      }
+      let clean = true;
+      for (let si = first; si <= last; si++) { if (frets[si] === -1) { clean = false; break; } }
+      if (clean) barreFret = minFret;
     }
   }
 
-  // ── Pontos, X e O ───────────────────────────────────────────────────────────
-  const xoY = marginT - 16; // Y dos símbolos acima da grade
+  // Mapa fret → número do dedo
+  // Barré = dedo 1; restantes ordenados crescentemente = dedos 2, 3, 4
+  const uniqueFrets = [...new Set(pressedList.map(o => o.f))].sort((a,b) => a - b);
+  const fingerMap = {};
+  let nextFinger = barreFret >= 0 ? 2 : 1;
+  uniqueFrets.forEach(f => {
+    if (f === barreFret) { fingerMap[f] = 1; }
+    else { fingerMap[f] = nextFinger++; }
+  });
+
+  // ── Desenha barré ───────────────────────────────────────────────────────────
+  if (barreFret >= 0) {
+    const barIdx = pressedList.filter(o => o.f === barreFret).map(o => o.si);
+    const first = barIdx[0], last = barIdx[barIdx.length - 1];
+    const barRow = barreFret - fretBase;
+    const barY   = marginT + barRow * fretH + fretH / 2;
+    const x1 = marginL + first * strW;
+    const x2 = marginL + last  * strW;
+    svgEl.appendChild(mk('rect', {
+      x: x1 - 11, y: barY - 10,
+      width: (x2 - x1) + 22, height: 20,
+      rx:'10', fill:colDot, opacity:'0.9'
+    }));
+    // Número "1" no centro do barré
+    svgEl.appendChild(mk('text', {
+      x: (x1 + x2) / 2, y: barY + 4,
+      'text-anchor':'middle', 'font-size':'10', 'fill':'#fff',
+      'font-family':'Nunito,sans-serif', 'font-weight':'800'
+    }, '1'));
+  }
+
+  // ── Pontos individuais, X e O ───────────────────────────────────────────────
+  const xoY = marginT - 16;
   frets.forEach((f, si) => {
     const x = marginL + si * strW;
     if (f === -1) {
-      // Mudo — X pequeno acima
       svgEl.appendChild(mk('text', {
         x, y: xoY,
-        'text-anchor':'middle', 'font-size':'12', 'fill':colMute,
+        'text-anchor':'middle', 'font-size':'13', 'fill':colMute,
         'font-family':'Arial,sans-serif', 'font-weight':'700'
       }, '×'));
     } else if (f === 0) {
-      // Solta — círculo vazio acima
       svgEl.appendChild(mk('circle', {
         cx:x, cy: xoY - 5, r:'5',
         fill:'none', stroke:colDot, 'stroke-width':'1.8'
       }));
-    } else {
-      // Dedo pressionado — círculo sólido dentro da grade
-      const row = f - fretBase; // 0-based (0 = primeira casa do grid)
+    } else if (f !== barreFret) {
+      // Dedo individual (não é barré)
+      const row = f - fretBase;
       const cy  = marginT + row * fretH + fretH / 2;
-      svgEl.appendChild(mk('circle', {cx:x, cy, r:'10', fill:colDot}));
+      svgEl.appendChild(mk('circle', {cx:x, cy, r:'11', fill:colDot}));
       svgEl.appendChild(mk('text', {
         x, y: cy + 4,
-        'text-anchor':'middle', 'font-size':'9', 'fill':'#fff',
-        'font-family':'Nunito,sans-serif', 'font-weight':'700'
-      }, String(f)));
+        'text-anchor':'middle', 'font-size':'10', 'fill':'#fff',
+        'font-family':'Nunito,sans-serif', 'font-weight':'800'
+      }, String(fingerMap[f] || '')));
     }
   });
 }

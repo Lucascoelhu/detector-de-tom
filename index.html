@@ -98,13 +98,20 @@
       const uid  = cred.user.uid;
       const paymentId = window._vp._pendingPaymentId || null;
 
-      // Salva o doc ANTES de liberar o listener
-      await setDoc(doc(db, 'users', uid), {
-        nome, plan: 'pro', detectionCount: 0,
-        createdAt: new Date(),
-        paymentId,
-        purchasedAt: new Date()
-      });
+      // Salva o doc — se falhar, deleta a conta Auth para não ficar conta zumbi
+      try {
+        await setDoc(doc(db, 'users', uid), {
+          nome, plan: 'pro', detectionCount: 0,
+          createdAt: new Date(),
+          paymentId,
+          purchasedAt: new Date()
+        });
+      } catch(firestoreErr) {
+        // Firestore falhou — desfaz a conta Auth
+        try { await cred.user.delete(); } catch(e) {}
+        _suppressAuth = false;
+        throw new Error('Erro ao salvar dados. Tente novamente.');
+      }
 
       // Agora é seguro liberar
       _suppressAuth = false;

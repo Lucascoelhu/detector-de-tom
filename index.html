@@ -39,7 +39,11 @@
   function getLocalCount() { return parseInt(localStorage.getItem(LS_KEY) || '0', 10); }
   function setLocalCount(n){ localStorage.setItem(LS_KEY, String(n)); }
 
+  // Flag para suprimir o listener durante cadastro/login manual
+  let _suppressAuth = false;
+
   onAuthStateChanged(auth, async (user) => {
+    if (_suppressAuth) return;
     if (user) {
       const snap = await getDoc(doc(db, 'users', user.uid));
       if (!snap.exists()) { await signOut(auth); return; }
@@ -47,11 +51,9 @@
       window._vp.user = user;
       window._vp.isPro = data.plan === 'pro';
       window._vp.detectionCount = data.detectionCount || 0;
-      // Mostra tela de boas-vindas com nome
       const nameDisplay = data.nome ? data.nome.split(' ')[0] : user.email.split('@')[0];
       showWelcomeScreen(nameDisplay);
     } else {
-      // Visitante — carrega contagem local e abre app direto
       window._vp.user = null;
       window._vp.isPro = false;
       window._vp.detectionCount = getLocalCount();
@@ -73,22 +75,39 @@
     try {
       document.getElementById('btnRegisterFinal').disabled = true;
       document.getElementById('btnRegisterFinal').textContent = 'Criando conta...';
+
+      // Suprime o listener para evitar redirect durante o cadastro
+      _suppressAuth = true;
+
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
       const uid  = cred.user.uid;
+      const paymentId = window._vp._pendingPaymentId || null;
+
+      // Salva o doc ANTES de liberar o listener
       await setDoc(doc(db, 'users', uid), {
-        nome, plan: 'pro', detectionCount: 0, createdAt: new Date()
+        nome, plan: 'pro', detectionCount: 0,
+        createdAt: new Date(),
+        paymentId,
+        purchasedAt: new Date()
       });
-      window._vp.user   = cred.user;
-      window._vp.isPro  = true;
-      window._vp.detectionCount = 0;
+
+      // Agora é seguro liberar
+      _suppressAuth = false;
+
+      window._vp.user              = cred.user;
+      window._vp.isPro             = true;
+      window._vp.detectionCount    = 0;
+      window._vp._pendingPaymentId = null;
       localStorage.removeItem(LS_KEY);
       closeRegisterModal();
       updatePlanUI();
       updateFreeBar();
       const lockEl = document.getElementById('hsSuggestLock');
       if (lockEl) lockEl.style.display = 'none';
-      showToast('🎉 Conta criada! Bem-vindo ao Pro, ' + nome.split(' ')[0] + '!');
+      const nameFirst = nome.split(' ')[0];
+      showWelcomeScreen(nameFirst);
     } catch(e) {
+      _suppressAuth = false;
       const map = {
         'auth/email-already-in-use': 'Este email já tem conta. Faça login.',
         'auth/invalid-email':        'Email inválido.',
@@ -111,6 +130,7 @@
     try {
       document.getElementById('btnLogin').disabled = true;
       document.getElementById('btnLogin').textContent = 'Entrando...';
+      // Login normal — deixa o onAuthStateChanged assumir
       await signInWithEmailAndPassword(auth, email, pass);
       closeLoginModal();
     } catch(e) {
@@ -286,11 +306,13 @@
     const interval = setInterval(async () => {
       try {
         const res  = await fetch(`${BACKEND_URL}/check-payment?payment_id=${paymentId}&uid=${uid}`);
+        if (!res.ok) return; // silencia erros temporários
         const data = await res.json();
         if (data.approved) {
           clearInterval(interval);
+          // Guarda payment_id para vincular ao cadastro
+          window._vp._pendingPaymentId = paymentId;
           hidePaywall();
-          // Abre modal de cadastro para criar a conta Pro
           openRegisterModal();
           showToast('✅ Pagamento confirmado! Crie sua conta agora.');
         } else {

@@ -520,20 +520,22 @@ body {
 .pro-badge { font-family:'Unbounded',sans-serif; font-weight:800; font-size:1.1rem; color:var(--accent); background:rgba(108,99,255,0.15); border:1px solid rgba(108,99,255,0.3); border-radius:9px; padding:8px 13px; flex-shrink:0; }
 
 /* ── TABS ───────────────────────────────────────────────────────────────────── */
-.tabs-nav { display:flex; width:100%; background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:3px; gap:3px; margin-bottom:8px; }
-.tab-btn  { flex:1; padding:8px 4px; border:none; border-radius:9px; font-family:'Nunito',sans-serif; font-size:0.7rem; font-weight:600; cursor:pointer; background:transparent; color:var(--muted); transition:all 0.2s; }
-.tab-btn.active { background:var(--surface); color:var(--accent); }
+.tabs-nav { display:flex; width:100%; background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:4px; gap:3px; margin-bottom:8px; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
+.tab-btn  { flex:1; padding:9px 4px; border:none; border-radius:9px; font-family:'Nunito',sans-serif; font-size:0.72rem; font-weight:700; cursor:pointer; background:transparent; color:var(--muted); transition:all 0.2s; }
+.tab-btn.active { background:var(--surface); color:var(--accent); box-shadow:0 1px 4px rgba(0,0,0,0.2); }
+.tab-btn:not(.active):hover { color:var(--sub); }
 
 .tab-panel { display:none; width:100%; }
 .tab-panel.active { display:flex; flex-direction:column; align-items:center; width:100%; }
 
 /* ── NOTE HERO ──────────────────────────────────────────────────────────────── */
 .note-hero {
-  width:100%; background:var(--card); border:1px solid var(--border);
-  border-radius:18px; padding:18px 16px 14px; margin-bottom:8px;
-  position:relative; overflow:hidden; transition:border-color 0.3s;
+  width:100%; background:var(--card); border:1.5px solid var(--border);
+  border-radius:20px; padding:22px 16px 16px; margin-bottom:8px;
+  position:relative; overflow:hidden; transition:border-color 0.3s, box-shadow 0.3s;
+  box-shadow:0 2px 12px rgba(0,0,0,0.25);
 }
-.note-hero.active { border-color:var(--accent); }
+.note-hero.active { border-color:var(--accent); box-shadow:0 4px 24px rgba(108,99,255,0.18); }
 .note-hero.active::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%, rgba(108,99,255,0.08) 0%, transparent 65%); pointer-events:none; }
 
 .note-name { font-family:'Unbounded',sans-serif; font-size:clamp(1.8rem,9vw,2.6rem); font-weight:800; letter-spacing:-0.02em; line-height:1; text-align:center; color:var(--accent); transition:color 0.4s; min-height:1em; }
@@ -560,12 +562,12 @@ body {
 .pitch-fill { height:100%; border-radius:1px; width:0%; transition:width 0.1s; background:linear-gradient(90deg,var(--accent),var(--accent3)); }
 
 /* ── CARDS ──────────────────────────────────────────────────────────────────── */
-.wave-card    { width:100%; background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:10px 12px; margin-bottom:8px; }
+.wave-card    { width:100%; background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:10px 12px; margin-bottom:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
 .card-label   { font-size:0.58rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:7px; font-weight:600; }
 canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 
 .two-col { display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; margin-bottom:8px; }
-.info-card { background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:11px 12px; }
+.info-card { background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:13px 14px; box-shadow:0 2px 8px rgba(0,0,0,0.15); transition:border-color 0.2s; }
 .info-card.accent-border { border-color:var(--accent); }
 .info-label { font-size:0.55rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; font-weight:600; }
 .info-value { font-family:'Unbounded',sans-serif; font-size:1.05rem; font-weight:700; color:var(--text); line-height:1.1; }
@@ -579,9 +581,10 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 @keyframes chipIn { from{transform:scale(0.75);opacity:0} to{transform:scale(1);opacity:1} }
 
 /* ── BUTTONS ────────────────────────────────────────────────────────────────── */
-.mic-btn { display:block; width:100%; max-width:220px; margin:4px auto 5px; padding:13px; border:none; border-radius:50px; font-family:'Nunito',sans-serif; font-size:0.8rem; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; letter-spacing:0.04em; transition:opacity 0.2s, transform 0.15s; }
-.mic-btn:hover { opacity:0.88; transform:translateY(-1px); }
-.mic-btn.stop  { background:var(--accent2); }
+.mic-btn { display:block; width:100%; max-width:240px; margin:6px auto 6px; padding:14px; border:none; border-radius:50px; font-family:'Nunito',sans-serif; font-size:0.82rem; font-weight:800; cursor:pointer; background:var(--accent); color:#fff; letter-spacing:0.05em; transition:all 0.2s cubic-bezier(0.34,1.3,0.64,1); box-shadow:0 4px 18px rgba(108,99,255,0.35); }
+.mic-btn:hover { opacity:0.92; transform:translateY(-2px); box-shadow:0 6px 22px rgba(108,99,255,0.45); }
+.mic-btn:active { transform:scale(0.97); }
+.mic-btn.stop  { background:var(--accent2); box-shadow:0 4px 18px rgba(244,63,94,0.35); }
 
 .pulse-dot    { display:inline-block; width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,0.5); margin-right:7px; vertical-align:middle; }
 .pulse-dot.on { background:#fff; animation:pulse 1.2s infinite; }
@@ -708,17 +711,24 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 /* ── NOTAS TAB ──────────────────────────────────────────────────────────────── */
 .notes-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; width:100%; margin-bottom:12px; }
 .note-play-btn {
-  background:var(--card); border:1px solid var(--border); border-radius:12px;
-  padding:14px 6px; cursor:pointer; font-family:'Unbounded',sans-serif;
+  background:var(--card); border:1.5px solid var(--border); border-radius:14px;
+  padding:16px 6px; cursor:pointer; font-family:'Unbounded',sans-serif;
   font-size:0.88rem; font-weight:700; color:var(--sub);
-  display:flex; flex-direction:column; align-items:center; gap:4px;
-  transition:all 0.15s; -webkit-tap-highlight-color:transparent;
-  user-select:none; -webkit-user-select:none; touch-action:none;
+  display:flex; flex-direction:column; align-items:center; gap:5px;
+  transition:all 0.18s cubic-bezier(0.34,1.3,0.64,1);
+  -webkit-tap-highlight-color:transparent;
+  user-select:none; -webkit-user-select:none;
 }
-.note-play-btn:active, .note-play-btn.playing { background:rgba(108,99,255,0.18); border-color:var(--accent); color:var(--accent); transform:scale(0.94); }
-.note-play-btn .npb-name { font-size:1.05rem; color:var(--text); }
-.note-play-btn .npb-pt   { font-size:0.52rem; color:var(--muted); letter-spacing:0.04em; font-family:'Nunito',sans-serif; }
-.note-play-btn .npb-hz   { font-size:0.5rem;  color:var(--muted); font-family:'Nunito',sans-serif; }
+.note-play-btn:hover { border-color:var(--border2); transform:translateY(-1px); }
+.note-play-btn.playing {
+  background:rgba(108,99,255,0.18); border-color:var(--accent);
+  color:var(--accent); transform:scale(0.96);
+  box-shadow: 0 0 16px rgba(108,99,255,0.25);
+}
+.note-play-btn .npb-name { font-size:1.1rem; color:var(--text); transition:color 0.15s; }
+.note-play-btn.playing .npb-name { color:var(--accent); }
+.note-play-btn .npb-pt   { font-size:0.5rem; color:var(--muted); letter-spacing:0.04em; font-family:'Nunito',sans-serif; }
+.note-play-btn .npb-hz   { font-size:0.48rem; color:var(--muted); font-family:'Nunito',sans-serif; }
 .octave-row { display:flex; gap:6px; width:100%; margin-bottom:10px; align-items:center; }
 .octave-btn { padding:5px 12px; border:1px solid var(--border); border-radius:20px; background:var(--surface); color:var(--muted); font-family:'Nunito',sans-serif; font-size:0.65rem; font-weight:600; cursor:pointer; transition:all 0.15s; }
 .octave-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(108,99,255,0.1); }
@@ -737,8 +747,8 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 .ct-tip-text strong { display:block; font-size:0.77rem; color:var(--text); font-weight:600; margin-bottom:2px; font-family:'Nunito',sans-serif; }
 .ct-tip-text span   { font-size:0.65rem; color:var(--sub); line-height:1.5; }
 .ct-close { width:100%; padding:12px; border:1px solid var(--border); border-radius:50px; background:transparent; color:var(--muted); font-family:'Nunito',sans-serif; font-size:0.78rem; font-weight:600; cursor:pointer; }
-.degree-row { cursor:pointer; transition:background 0.15s; }
-.degree-row:hover { background:rgba(108,99,255,0.07); }
+.degree-row { cursor:pointer; transition:all 0.15s; }
+.degree-row:hover { background:rgba(108,99,255,0.09); border-color:rgba(108,99,255,0.25); transform:translateX(2px); }
 </style>
 </head>
 <body>
@@ -938,7 +948,7 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
       <div class="octave-row" id="octaveRow"></div>
       <div class="notes-tab-label" style="margin-top:10px">Toque para ouvir</div>
       <div class="notes-grid" id="notesGrid"></div>
-      <div style="font-size:0.6rem;color:var(--muted);text-align:center;margin-top:4px;">Pressione e solte para tocar · mantendo pressionado sustenta a nota</div>
+      <div style="font-size:0.6rem;color:var(--muted);text-align:center;margin-top:4px;">Toque para ligar · toque novamente para parar</div>
     </div>
     <div style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 12px;margin-bottom:8px;">
       <div class="notes-tab-label">Frequências de referência</div>
@@ -1301,10 +1311,12 @@ window.openProModal  = () => document.getElementById('proModal').classList.add('
 window.closeProModal = () => document.getElementById('proModal').classList.remove('open');
 
 // ── NOTAS TAB ─────────────────────────────────────────────────────────────────
-let selOctave = 4;
+let selOctave    = 4;
 let _noteAudioCtx = null;
 let _noteOscNode  = null;
 let _noteGainNode = null;
+let _playingBtn   = null;  // botão atualmente tocando
+let _playingFreq  = null;  // frequência atualmente tocando
 
 function getNoteAudioCtx() {
   if (!_noteAudioCtx || _noteAudioCtx.state === 'closed') {
@@ -1374,14 +1386,30 @@ function renderNotesTab() {
 function rebuildNotesGrid() {
   const grid = document.getElementById('notesGrid');
   grid.innerHTML = '';
+  _playingBtn  = null;
+  _playingFreq = null;
   NOTE_NAMES.forEach((n, i) => {
     const freq = noteFreq(i, selOctave);
     const btn  = document.createElement('button');
     btn.className = 'note-play-btn';
     btn.innerHTML = `<span class="npb-name">${n}</span><span class="npb-pt">${NOTE_NAMES_PT[i]}</span><span class="npb-hz">${freq.toFixed(1)} Hz</span>`;
-    btn.addEventListener('pointerdown', e => { e.preventDefault(); playNoteFreq(freq); btn.classList.add('playing'); });
-    btn.addEventListener('pointerup',   () => { stopNoteFreq(); btn.classList.remove('playing'); });
-    btn.addEventListener('pointerleave',() => { stopNoteFreq(); btn.classList.remove('playing'); });
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      if (_playingFreq === freq) {
+        // Mesma nota — para o som
+        stopNoteFreq();
+        btn.classList.remove('playing');
+        _playingBtn  = null;
+        _playingFreq = null;
+      } else {
+        // Nota diferente ou nova — para a anterior e toca essa
+        if (_playingBtn) _playingBtn.classList.remove('playing');
+        playNoteFreq(freq);
+        btn.classList.add('playing');
+        _playingBtn  = btn;
+        _playingFreq = freq;
+      }
+    });
     grid.appendChild(btn);
   });
 }

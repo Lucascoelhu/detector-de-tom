@@ -98,7 +98,10 @@
       const uid  = cred.user.uid;
       const paymentId = window._vp._pendingPaymentId || null;
 
-      // Salva o doc — se falhar, deleta a conta Auth para não ficar conta zumbi
+      // Salva no Firestore usando o token do usuário recém-criado
+      // O getIdToken() garante que o Firebase Auth reconhece o usuário antes do setDoc
+      await cred.user.getIdToken(true);
+
       try {
         await setDoc(doc(db, 'users', uid), {
           nome, plan: 'pro', detectionCount: 0,
@@ -107,13 +110,13 @@
           purchasedAt: new Date()
         });
       } catch(firestoreErr) {
-        // Firestore falhou — desfaz a conta Auth
+        console.error('Firestore setDoc erro:', firestoreErr.code, firestoreErr.message);
         try { await cred.user.delete(); } catch(e) {}
         _suppressAuth = false;
-        throw new Error('Erro ao salvar dados. Tente novamente.');
+        throw firestoreErr;
       }
 
-      // Agora é seguro liberar
+      // Tudo salvo — libera listener e entra no app
       _suppressAuth = false;
 
       window._vp.user              = cred.user;

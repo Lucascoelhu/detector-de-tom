@@ -245,13 +245,20 @@
     btn.textContent = 'Gerando Pix...';
     btn.disabled = true;
     try {
-      // Para checkout não precisamos de user ainda
       const uid = window._vp.user ? window._vp.user.uid : 'guest_' + Date.now();
       const res  = await fetch(`${BACKEND_URL}/create-preference`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ uid, email: window._vp.user?.email || '' })
       });
+      // Mostra erro detalhado se API falhar
+      if (!res.ok) {
+        let msg = 'Erro ' + res.status;
+        try { const t = await res.text(); msg += ': ' + t; } catch(e) {}
+        console.error('create-preference erro:', msg);
+        alert('Erro ao gerar Pix (' + res.status + '). Verifique o console.');
+        return;
+      }
       const data = await res.json();
       if (data.qr_code) {
         document.getElementById('pixOffer').style.display = 'none';
@@ -259,8 +266,14 @@
         document.getElementById('pixQRImg').src           = `data:image/png;base64,${data.qr_code_base64}`;
         document.getElementById('pixCode').textContent    = data.qr_code;
         startPolling(data.payment_id, uid);
-      } else { alert('Erro ao gerar Pix. Tente novamente.'); }
-    } catch(e) { alert('Erro de conexão.'); }
+      } else {
+        console.error('create-preference resposta sem qr_code:', data);
+        alert('Erro ao gerar Pix. Resposta inesperada da API.');
+      }
+    } catch(e) {
+      console.error('startCheckout exception:', e);
+      alert('Erro de conexão: ' + e.message);
+    }
     finally { btn.textContent = 'Pagar com Pix — R$29,90'; btn.disabled = false; }
   };
 

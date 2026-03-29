@@ -128,8 +128,7 @@
       closeRegisterModal();
       updatePlanUI();
       updateFreeBar();
-      const lockEl = document.getElementById('hsSuggestLock');
-      if (lockEl) lockEl.style.display = 'none';
+      if (window._updateHsSuggestVisibility) window._updateHsSuggestVisibility();
       const nameFirst = nome.split(' ')[0];
       showWelcomeScreen(nameFirst);
     } catch(e) {
@@ -214,8 +213,7 @@
     updateTopbar();
     updatePlanUI();
     updateFreeBar();
-    const lockEl = document.getElementById('hsSuggestLock');
-    if (lockEl) lockEl.style.display = window._vp.isPro ? 'none' : 'flex';
+    if (window._updateHsSuggestVisibility) window._updateHsSuggestVisibility();
   }
 
   function updateTopbar() {
@@ -233,6 +231,15 @@
   function updatePlanUI() {
     const badge = document.getElementById('planBadge');
     if (!badge) return;
+    // Reset da aba acordes para forçar rerenderização com novo plano
+    if (typeof _clBuilt !== 'undefined') window._resetClBuilt && window._resetClBuilt();
+    // Reset do campo harmônico
+    const hf = document.getElementById('harmonicField');
+    if (hf) hf.innerHTML = '';
+    const chordRoots = document.getElementById('chordRoots');
+    if (chordRoots) chordRoots.innerHTML = '';
+    const chordTypes = document.getElementById('chordTypes');
+    if (chordTypes) chordTypes.innerHTML = '';
     if (window._vp.isPro) {
       badge.textContent = '⚡ PRO';
       badge.className   = 'plan-badge pro';
@@ -1152,23 +1159,27 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
     </div>
 
     <!-- SUGESTÃO DO CAMPO HARMÔNICO — no lugar da forma de onda -->
-    <div class="harmonic-suggest-card" style="position:relative;overflow:hidden">
-      <div class="pro-lock" id="hsSuggestLock" style="border-radius:var(--r);display:none">
-        <div class="lock-icon">&#x1F512;</div>
-        <div class="lock-title">Recurso Pro</div>
-        <p class="lock-sub">Veja os acordes do tom em tempo real com o plano Pro.</p>
-        <div class="lock-features">
+    <div class="harmonic-suggest-card" style="position:relative;">
+      <!-- Lock inline (não absolute) para não cortar conteúdo -->
+      <div id="hsSuggestLock" style="display:none;flex-direction:column;align-items:center;text-align:center;padding:8px 4px 4px;gap:8px;">
+        <div style="font-size:1.3rem;">🔒</div>
+        <div style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:0.82rem;color:var(--text);">Recurso Pro</div>
+        <p style="font-size:0.68rem;color:var(--sub);line-height:1.5;max-width:220px;">Veja os acordes do tom em tempo real com o plano Pro.</p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
           <span class="lock-feat-chip">Acordes em tempo real</span>
-          <span class="lock-feat-chip">Campo Harmonico</span>
+          <span class="lock-feat-chip">Campo Harmônico</span>
         </div>
-        <button class="lock-btn" onclick="showPaywall()">Desbloquear Pro</button>
+        <button class="lock-btn" style="margin-top:2px;padding:9px 22px;font-size:0.74rem;" onclick="showPaywall()">Desbloquear Pro</button>
       </div>
-      <div class="hs-header">
-        <span class="hs-title">Acordes do tom</span>
-        <span class="hs-key" id="hsSuggestKey">—</span>
-      </div>
-      <div class="hs-chords" id="hsSuggestChords">
-        <span class="hs-empty">cante para ver sugestões</span>
+      <!-- Conteúdo Pro (visível só quando isPro) -->
+      <div id="hsSuggestContent">
+        <div class="hs-header">
+          <span class="hs-title">Acordes do tom</span>
+          <span class="hs-key" id="hsSuggestKey">—</span>
+        </div>
+        <div class="hs-chords" id="hsSuggestChords">
+          <span class="hs-empty">cante para ver sugestões</span>
+        </div>
       </div>
     </div>
 
@@ -1191,20 +1202,6 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
   <!-- TAB CAMPO HARMÔNICO -->
   <div class="tab-panel" id="tab-harmonico">
     <div class="harmonic-card">
-      <div class="pro-lock" id="proLock">
-        <div class="lock-icon">&#x1F512;</div>
-        <div class="lock-title">Recurso Pro</div>
-        <p class="lock-sub">Desbloqueie o Campo Harmonico e muito mais com o plano Pro. Acesso vitalicio por apenas R$29,90.</p>
-        <div class="lock-features">
-          <span class="lock-feat-chip">Deteccoes ilimitadas</span>
-          <span class="lock-feat-chip">Campo Harmonico</span>
-          <span class="lock-feat-chip">Acordes em tempo real</span>
-          <span class="lock-feat-chip">Dicas de preparacao</span>
-          <span class="lock-feat-chip">Notas com audio</span>
-          <span class="lock-feat-chip">Todas as escalas</span>
-        </div>
-        <button class="lock-btn" onclick="showPaywall()">Desbloquear Pro</button>
-      </div>
       <div class="card-label" style="margin-bottom:10px">Tônica</div>
       <div class="chord-selector" id="chordRoots"></div>
       <div class="card-label" style="margin-bottom:7px">Escala</div>
@@ -1461,7 +1458,7 @@ const FUNCS  =['Tônica','Supertônica','Mediante','Subdominante','Dominante','S
 let selRoot=0, selType='Maior';
 
 function renderHarmonicField(){
-  document.getElementById('proLock').style.display=(window._vp&&window._vp.isPro)?'none':'flex';
+  const isPro = window._vp && window._vp.isPro;
   const rootsEl=document.getElementById('chordRoots');
   if(!rootsEl.children.length){
     NOTE_NAMES.forEach((n,i)=>{
@@ -1490,11 +1487,27 @@ function renderHarmonicField(){
     const ri=(selRoot+iv)%12,q=qualities[i];
     const qc=q==='Maior'?'dq-major':q==='Dim'?'dq-dim':'dq-minor';
     const cn=NOTE_NAMES[ri]+(q==='Menor'?'m':q==='Dim'?'°':'');
-    const row=document.createElement('div'); row.className='degree-row';
-    row.innerHTML=`<span class="degree-num">${DEGREES[i]}</span><span class="degree-chord">${cn}</span><span class="degree-function">${FUNCS[i]}</span><span class="degree-quality ${qc}">${q}</span>`;
-    row.onclick=()=>showChordTip(cn, DEGREES[i], FUNCS[i], q, i, selType);
+    const isLocked = !isPro && i >= 3; // primeiros 3 graus livres no teste
+    const row=document.createElement('div');
+    if (isLocked) {
+      row.className='degree-row';
+      row.style.cssText='opacity:0.45;filter:blur(2px);pointer-events:none;user-select:none;';
+      row.innerHTML=`<span class="degree-num">${DEGREES[i]}</span><span class="degree-chord">—</span><span class="degree-function">${FUNCS[i]}</span><span class="degree-quality ${qc}">${q}</span>`;
+    } else {
+      row.className='degree-row';
+      row.innerHTML=`<span class="degree-num">${DEGREES[i]}</span><span class="degree-chord">${cn}</span><span class="degree-function">${FUNCS[i]}</span><span class="degree-quality ${qc}">${q}</span>`;
+      row.onclick=()=>showChordTip(cn, DEGREES[i], FUNCS[i], q, i, selType);
+    }
     field.appendChild(row);
   });
+
+  // Banner de upgrade se free
+  if (!isPro) {
+    const banner = document.createElement('div');
+    banner.style.cssText='margin-top:8px;background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.25);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;';
+    banner.innerHTML=`<span style="font-size:0.68rem;color:var(--sub);">🔒 <strong style="color:var(--text);">4 graus bloqueados</strong> — desbloqueie tudo com o Pro</span><button onclick="showPaywall()" style="border:none;background:var(--accent);color:#fff;font-family:'Nunito',sans-serif;font-size:0.65rem;font-weight:700;padding:6px 13px;border-radius:20px;cursor:pointer;white-space:nowrap;">Ver Pro</button>`;
+    field.appendChild(banner);
+  }
 }
 
 function buildScale(r,iv){return iv.map(i=>(r+i)%12);}
@@ -1577,17 +1590,24 @@ function updateKeyDisplay(){
 }
 
 // Sugestão dos acordes do campo harmônico em tempo real
-const MAJOR_Q_S=['Maior','Menor','Menor','Maior','Maior','Menor','Dim'];
-const MINOR_Q_S=['Menor','Dim','Maior','Menor','Menor','Maior','Maior'];
-const DEG_S    =['I','II','III','IV','V','VI','VII'];
+  const MAJOR_Q_S=['Maior','Menor','Menor','Maior','Maior','Menor','Dim'];
+  const MINOR_Q_S=['Menor','Dim','Maior','Menor','Menor','Maior','Maior'];
+  const DEG_S    =['I','II','III','IV','V','VI','VII'];
+
+  function _updateHsSuggestVisibility() {
+    const isPro = window._vp && window._vp.isPro;
+    const lockEl    = document.getElementById('hsSuggestLock');
+    const contentEl = document.getElementById('hsSuggestContent');
+    if (lockEl)    lockEl.style.display    = isPro ? 'none' : 'flex';
+    if (contentEl) contentEl.style.display = isPro ? 'block' : 'none';
+  }
+  window._updateHsSuggestVisibility = _updateHsSuggestVisibility;
 
 function updateHarmonicSuggest(res) {
   const keyEl    = document.getElementById('hsSuggestKey');
   const chordsEl = document.getElementById('hsSuggestChords');
-  const lockEl   = document.getElementById('hsSuggestLock');
-  // Mostra lock para usuários free
   const isPro = window._vp && window._vp.isPro;
-  if (lockEl) lockEl.style.display = isPro ? 'none' : 'flex';
+  _updateHsSuggestVisibility();
   if (!isPro) return;
   if (!res) {
     keyEl.textContent = '—';
@@ -2668,6 +2688,7 @@ window.closeChordTip = () => document.getElementById('chordTipModal').classList.
 
 // ── CHORD LIBRARY ─────────────────────────────────────────────────────────────
 let _clRoot = 'C', _clType = 'M', _clVoicing = 0, _clBuilt = false;
+window._resetClBuilt = () => { _clBuilt = false; };
 
 function renderChordLibrary() {
   if (_clBuilt) return;
@@ -2697,16 +2718,21 @@ function renderChordLibrary() {
 }
 
 function _updateClTypes() {
+  const isPro = window._vp && window._vp.isPro;
   const typesEl = document.getElementById('clTypes');
   typesEl.innerHTML = '';
   const shapeSet = CHORD_SHAPES[_clRoot] || {};
+  let freeCount = 0;
   VARIANT_ORDER.forEach(key => {
     const b = document.createElement('button');
     const hasShape = !!shapeSet[key];
-    b.className = 'cl-type-btn' + (key === _clType ? ' active' : '') + (!hasShape ? ' unavailable' : '');
-    b.textContent = VARIANT_LABELS[key] || key;
+    const isLocked = !isPro && freeCount >= 3;
+    if (hasShape && !isLocked) freeCount++;
+    b.className = 'cl-type-btn' + (key === _clType ? ' active' : '') + (!hasShape ? ' unavailable' : '') + (isLocked ? ' unavailable' : '');
+    b.textContent = isLocked ? '🔒' : (VARIANT_LABELS[key] || key);
+    b.title = isLocked ? 'Recurso Pro — clique para desbloquear' : '';
     b.setAttribute('data-testid', 'cl-type-' + key);
-    if (hasShape) {
+    if (hasShape && !isLocked) {
       b.onclick = () => {
         _clType = key; _clVoicing = 0;
         typesEl.querySelectorAll('.cl-type-btn').forEach(btn => {
@@ -2716,21 +2742,10 @@ function _updateClTypes() {
         _renderClDiagram();
         _highlightClGrid();
       };
+    } else if (isLocked) {
+      b.style.cssText = 'opacity:0.4;cursor:pointer;pointer-events:auto;';
+      b.onclick = () => showPaywall();
     }
-    typesEl.appendChild(b);
-  });
-  // Also add slash chords if any
-  Object.keys(shapeSet).filter(k => k.startsWith('/')).forEach(key => {
-    const b = document.createElement('button');
-    b.className = 'cl-type-btn' + (key === _clType ? ' active' : '');
-    b.textContent = key;
-    b.onclick = () => {
-      _clType = key; _clVoicing = 0;
-      typesEl.querySelectorAll('.cl-type-btn').forEach(btn => btn.classList.remove('active'));
-      b.classList.add('active');
-      _renderClDiagram();
-      _highlightClGrid();
-    };
     typesEl.appendChild(b);
   });
 }
@@ -2766,30 +2781,50 @@ function _renderClDiagram() {
 }
 
 function _renderClAllGrid() {
+  const isPro = window._vp && window._vp.isPro;
   const gridEl = document.getElementById('clAllGrid');
   gridEl.innerHTML = '';
   document.getElementById('clAllTitle').textContent = _clRoot;
   const shapeSet = CHORD_SHAPES[_clRoot] || {};
   const allKeys = [...VARIANT_ORDER, ...Object.keys(shapeSet).filter(k => k.startsWith('/'))].filter(k => shapeSet[k]);
 
+  let freeCount = 0;
   allKeys.forEach(key => {
+    const isLocked = !isPro && freeCount >= 3;
+    if (!isLocked) freeCount++;
+
     const item = document.createElement('div');
-    item.className = 'cl-grid-item' + (key === _clType ? ' active' : '');
     const label = VARIANT_LABELS[key] || key;
-    item.innerHTML = '<div class="cl-grid-name">' + _clRoot + (key === 'M' ? '' : key.startsWith('/') ? key : key) + '</div><div class="cl-grid-type">' + label + '</div>';
-    item.setAttribute('data-testid', 'cl-grid-' + key);
-    item.onclick = () => {
-      _clType = key; _clVoicing = 0;
-      _renderClDiagram();
-      _highlightClGrid();
-      // Also update type buttons
-      document.getElementById('clTypes').querySelectorAll('.cl-type-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if ((btn.textContent === (VARIANT_LABELS[key] || key)) || btn.textContent === key) btn.classList.add('active');
-      });
-    };
+
+    if (isLocked) {
+      item.className = 'cl-grid-item';
+      item.style.cssText = 'opacity:0.35;filter:blur(1.5px);cursor:pointer;';
+      item.innerHTML = '<div class="cl-grid-name">🔒</div><div class="cl-grid-type">Pro</div>';
+      item.onclick = () => showPaywall();
+    } else {
+      item.className = 'cl-grid-item' + (key === _clType ? ' active' : '');
+      item.innerHTML = '<div class="cl-grid-name">' + _clRoot + (key === 'M' ? '' : key.startsWith('/') ? key : key) + '</div><div class="cl-grid-type">' + label + '</div>';
+      item.setAttribute('data-testid', 'cl-grid-' + key);
+      item.onclick = () => {
+        _clType = key; _clVoicing = 0;
+        _renderClDiagram();
+        _highlightClGrid();
+        document.getElementById('clTypes').querySelectorAll('.cl-type-btn').forEach(btn => {
+          btn.classList.remove('active');
+          if ((btn.textContent === (VARIANT_LABELS[key] || key)) || btn.textContent === key) btn.classList.add('active');
+        });
+      };
+    }
     gridEl.appendChild(item);
   });
+
+  // Banner de upgrade se free
+  if (!isPro) {
+    const banner = document.createElement('div');
+    banner.style.cssText='margin-top:10px;background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.25);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;';
+    banner.innerHTML=`<span style="font-size:0.68rem;color:var(--sub);">🔒 <strong style="color:var(--text);">+${allKeys.length - 3} acordes</strong> no plano Pro</span><button onclick="showPaywall()" style="border:none;background:var(--accent);color:#fff;font-family:'Nunito',sans-serif;font-size:0.65rem;font-weight:700;padding:6px 13px;border-radius:20px;cursor:pointer;white-space:nowrap;">Ver Pro</button>`;
+    gridEl.appendChild(banner);
+  }
 }
 
 function _highlightClGrid() {

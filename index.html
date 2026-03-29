@@ -131,12 +131,13 @@
       showWelcomeScreen(nameFirst);
     } catch(e) {
       _suppressAuth = false;
+      console.error('doRegisterAfterPayment erro:', e.code, e.message, e);
       const map = {
         'auth/email-already-in-use': 'Este email já tem conta. Faça login.',
         'auth/invalid-email':        'Email inválido.',
         'auth/weak-password':        'Senha fraca (mín. 6 caracteres).',
       };
-      err.textContent = map[e.code] || 'Erro ao criar conta.';
+      err.textContent = map[e.code] || ('Erro: ' + (e.message || e.code || 'desconhecido'));
     } finally {
       const btn = document.getElementById('btnRegisterFinal');
       if (btn) { btn.disabled = false; btn.textContent = 'Criar minha conta Pro'; }

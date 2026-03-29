@@ -520,8 +520,8 @@ body {
 .pro-badge { font-family:'Unbounded',sans-serif; font-weight:800; font-size:1.1rem; color:var(--accent); background:rgba(108,99,255,0.15); border:1px solid rgba(108,99,255,0.3); border-radius:9px; padding:8px 13px; flex-shrink:0; }
 
 /* ── TABS ───────────────────────────────────────────────────────────────────── */
-.tabs-nav { display:flex; width:100%; background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:4px; gap:3px; margin-bottom:8px; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
-.tab-btn  { flex:1; padding:9px 4px; border:none; border-radius:9px; font-family:'Nunito',sans-serif; font-size:0.72rem; font-weight:700; cursor:pointer; background:transparent; color:var(--muted); transition:all 0.2s; }
+.tabs-nav { display:flex; width:100%; background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:4px; gap:2px; margin-bottom:8px; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
+.tab-btn  { flex:1; padding:9px 2px; border:none; border-radius:9px; font-family:'Nunito',sans-serif; font-size:0.65rem; font-weight:700; cursor:pointer; background:transparent; color:var(--muted); transition:all 0.2s; white-space:nowrap; }
 .tab-btn.active { background:var(--surface); color:var(--accent); box-shadow:0 1px 4px rgba(0,0,0,0.2); }
 .tab-btn:not(.active):hover { color:var(--sub); }
 
@@ -679,12 +679,42 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 .dq-minor { background:rgba(148,163,184,0.08); color:var(--sub); border:1px solid var(--border); }
 .dq-dim   { background:rgba(244,63,94,0.1); color:var(--accent2); border:1px solid rgba(244,63,94,0.2); }
 
-.pro-lock { position:absolute; inset:0; border-radius:18px; background:rgba(10,10,18,0.88); backdrop-filter:blur(5px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; z-index:10; padding:20px; text-align:center; }
-.lock-icon  { font-size:2rem; }
+.pro-lock {
+  position:absolute; inset:0; border-radius:18px;
+  background: linear-gradient(135deg, rgba(108,99,255,0.12) 0%, rgba(244,63,94,0.08) 100%);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:10px; z-index:10; padding:20px; text-align:center;
+  border: 1px solid rgba(108,99,255,0.2);
+}
+.lock-icon {
+  width:56px; height:56px; border-radius:50%;
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.5rem; box-shadow: 0 8px 32px rgba(108,99,255,0.35);
+  animation: lockPulse 2s ease-in-out infinite;
+}
+@keyframes lockPulse {
+  0%,100% { box-shadow: 0 8px 32px rgba(108,99,255,0.35); }
+  50% { box-shadow: 0 8px 48px rgba(108,99,255,0.55); }
+}
 .lock-title { font-family:'Unbounded',sans-serif; font-weight:800; font-size:1rem; color:var(--text); }
-.lock-sub   { font-size:0.7rem; color:var(--sub); line-height:1.6; max-width:210px; }
-.lock-btn   { margin-top:4px; padding:10px 24px; border:none; border-radius:50px; font-family:'Nunito',sans-serif; font-size:0.78rem; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; transition:opacity 0.2s; }
-.lock-btn:hover { opacity:0.85; }
+.lock-sub   { font-size:0.72rem; color:var(--sub); line-height:1.6; max-width:240px; }
+.lock-features { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:4px 0; }
+.lock-feat-chip {
+  font-size:0.6rem; padding:4px 10px; border-radius:20px;
+  background:rgba(108,99,255,0.12); color:var(--accent);
+  border:1px solid rgba(108,99,255,0.2); font-weight:600;
+  font-family:'Nunito',sans-serif; white-space:nowrap;
+}
+.lock-btn {
+  margin-top:4px; padding:12px 28px; border:none; border-radius:50px;
+  font-family:'Nunito',sans-serif; font-size:0.8rem; font-weight:700;
+  cursor:pointer; color:#fff; transition:all 0.2s;
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  box-shadow: 0 4px 20px rgba(108,99,255,0.4);
+}
+.lock-btn:hover { opacity:0.9; transform:translateY(-1px); box-shadow: 0 6px 28px rgba(108,99,255,0.5); }
 
 /* ── PAYWALL ────────────────────────────────────────────────────────────────── */
 #paywallOverlay { display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:16px; }
@@ -725,18 +755,61 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
   border-radius:22px 22px 0 0; padding:24px 20px 36px;
   width:100%; max-width:440px;
   animation: slideUp 0.28s cubic-bezier(0.34,1.2,0.64,1);
+  max-height:90vh; overflow-y:auto;
 }
 @keyframes slideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
 .pm-handle { width:36px; height:4px; background:var(--border2); border-radius:2px; margin:0 auto 20px; }
-.pm-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
-.pm-icon { width:44px; height:44px; background:rgba(108,99,255,0.15); border:1px solid rgba(108,99,255,0.3); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; }
+.pm-header { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+.pm-icon {
+  width:48px; height:48px;
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  border-radius:14px; display:flex; align-items:center; justify-content:center;
+  font-size:1.3rem; flex-shrink:0;
+  box-shadow: 0 4px 20px rgba(108,99,255,0.35);
+}
 .pm-title { font-family:'Unbounded',sans-serif; font-weight:800; font-size:1.1rem; color:var(--accent); }
 .pm-sub   { font-size:0.65rem; color:var(--sub); margin-top:2px; }
-.pm-perks { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
-.pm-perk  { display:flex; align-items:center; gap:12px; background:var(--surface); border-radius:10px; padding:11px 13px; border:1px solid var(--border); }
-.pm-perk-icon { font-size:1.1rem; width:28px; text-align:center; flex-shrink:0; }
-.pm-perk-text strong { display:block; font-size:0.8rem; color:var(--text); font-weight:600; }
-.pm-perk-text span   { font-size:0.65rem; color:var(--sub); }
+.pm-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  color:#fff; font-size:0.6rem; font-weight:700; padding:4px 10px;
+  border-radius:20px; margin-bottom:14px; font-family:'Nunito',sans-serif;
+}
+.pm-section-title {
+  font-size:0.65rem; font-weight:700; color:var(--muted);
+  text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px;
+  font-family:'Nunito',sans-serif;
+}
+.pm-perks { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+.pm-perk  {
+  display:flex; align-items:center; gap:12px;
+  background:var(--surface); border-radius:12px; padding:12px 14px;
+  border:1px solid var(--border); transition:all 0.2s;
+}
+.pm-perk:hover { border-color:rgba(108,99,255,0.3); background:rgba(108,99,255,0.05); }
+.pm-perk-icon {
+  font-size:1.1rem; width:36px; height:36px; text-align:center; flex-shrink:0;
+  background:rgba(108,99,255,0.1); border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  border:1px solid rgba(108,99,255,0.15);
+}
+.pm-perk-text strong { display:block; font-size:0.78rem; color:var(--text); font-weight:700; }
+.pm-perk-text span   { font-size:0.62rem; color:var(--sub); line-height:1.4; }
+.pm-price-row {
+  display:flex; align-items:center; justify-content:space-between;
+  background: linear-gradient(135deg, rgba(108,99,255,0.08), rgba(167,139,250,0.08));
+  border:1px solid rgba(108,99,255,0.2); border-radius:14px;
+  padding:14px 16px; margin-bottom:14px;
+}
+.pm-price-left { font-family:'Unbounded',sans-serif; }
+.pm-price-amount { font-size:1.6rem; font-weight:800; color:var(--text); }
+.pm-price-label { font-size:0.58rem; color:var(--muted); }
+.pm-price-right { text-align:right; }
+.pm-price-tag {
+  font-size:0.6rem; color:#10b981; font-weight:700;
+  background:rgba(16,185,129,0.1); padding:3px 8px;
+  border-radius:12px; border:1px solid rgba(16,185,129,0.2);
+}
 .pm-close { width:100%; padding:12px; border:1px solid var(--border); border-radius:50px; background:transparent; color:var(--muted); font-family:'Nunito',sans-serif; font-size:0.78rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
 .pm-close:hover { border-color:var(--accent); color:var(--accent); }
 
@@ -767,6 +840,103 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 .notes-tab-label { font-size:0.58rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); font-weight:600; width:100%; margin-bottom:6px; }
 
 /* ── CHORD TIPS ─────────────────────────────────────────────────────────────── */
+
+/* ── CHORD LIBRARY TAB ─────────────────────────────────────────────────────── */
+.chord-lib-card {
+  width:100%; background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r); padding:14px 12px; margin-bottom:8px;
+}
+.chord-lib-label {
+  font-size:0.58rem; letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--muted); font-weight:600; margin-bottom:8px;
+  font-family:'Nunito',sans-serif;
+}
+.chord-lib-roots {
+  display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;
+}
+.cl-root-btn {
+  padding:8px 14px; border:1.5px solid var(--border); border-radius:10px;
+  background:var(--surface); color:var(--sub); font-family:'Unbounded',sans-serif;
+  font-size:0.82rem; font-weight:700; cursor:pointer; transition:all 0.18s;
+  min-width:42px; text-align:center;
+}
+.cl-root-btn.active {
+  border-color:var(--accent); color:var(--accent);
+  background:rgba(108,99,255,0.12);
+  box-shadow:0 2px 12px rgba(108,99,255,0.2);
+}
+.chord-lib-types {
+  display:flex; flex-wrap:wrap; gap:5px; margin-bottom:14px;
+}
+.cl-type-btn {
+  padding:5px 10px; border:1px solid var(--border); border-radius:20px;
+  background:var(--surface); color:var(--muted); font-family:'Nunito',sans-serif;
+  font-size:0.62rem; font-weight:600; cursor:pointer; transition:all 0.15s;
+}
+.cl-type-btn.active {
+  border-color:var(--accent); color:var(--accent);
+  background:rgba(108,99,255,0.1);
+}
+.cl-type-btn.unavailable {
+  opacity:0.3; pointer-events:none;
+}
+.chord-lib-diagram {
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+}
+.cl-chord-title {
+  font-family:'Unbounded',sans-serif; font-weight:800; font-size:1.3rem;
+  color:var(--accent); text-align:center;
+}
+.cl-chord-subtitle {
+  font-size:0.65rem; color:var(--sub); text-align:center; margin-bottom:6px;
+}
+.cl-voicing-row {
+  display:flex; gap:8px; margin-bottom:6px;
+}
+.cl-voicing-btn {
+  padding:6px 14px; border:1px solid var(--border); border-radius:20px;
+  background:var(--surface); color:var(--muted); font-family:'Nunito',sans-serif;
+  font-size:0.62rem; font-weight:600; cursor:pointer; transition:all 0.15s;
+}
+.cl-voicing-btn.active {
+  border-color:var(--accent); color:var(--accent);
+  background:rgba(108,99,255,0.1);
+}
+.cl-diagram-wrap {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:10px; display:flex; flex-direction:column;
+  align-items:center;
+}
+.cl-notes-row {
+  display:flex; gap:10px; justify-content:center; flex-wrap:wrap;
+  margin-top:8px;
+}
+.cl-formula {
+  font-size:0.65rem; color:var(--sub); text-align:center;
+  margin-top:6px; font-family:'Nunito',sans-serif;
+}
+.chord-lib-grid {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:10px;
+}
+.cl-grid-item {
+  padding:10px 6px; border:1px solid var(--border); border-radius:10px;
+  background:var(--surface); cursor:pointer; text-align:center;
+  transition:all 0.15s; font-family:'Nunito',sans-serif;
+}
+.cl-grid-item:hover {
+  border-color:rgba(108,99,255,0.3); background:rgba(108,99,255,0.05);
+}
+.cl-grid-item.active {
+  border-color:var(--accent); background:rgba(108,99,255,0.1);
+}
+.cl-grid-name {
+  font-family:'Unbounded',sans-serif; font-weight:700;
+  font-size:0.85rem; color:var(--text);
+}
+.cl-grid-type {
+  font-size:0.55rem; color:var(--muted); margin-top:2px;
+}
+
 .chord-tip-overlay { display:none; position:fixed; inset:0; z-index:150; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px); align-items:flex-end; justify-content:center; }
 .chord-tip-overlay.open { display:flex; }
 .chord-tip-card { background:var(--card); border:1px solid var(--border); border-radius:22px 22px 0 0; padding:22px 20px 36px; width:100%; max-width:440px; animation:slideUp 0.28s cubic-bezier(0.34,1.2,0.64,1); }
@@ -943,9 +1113,10 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 
   <!-- TABS -->
   <div class="tabs-nav">
-    <button class="tab-btn active" onclick="switchTab2('detector')">🎵 Detector</button>
-    <button class="tab-btn"        onclick="switchTab2('harmonico')">🎼 Harmônico</button>
-    <button class="tab-btn"        onclick="switchTab2('notas')">🎹 Notas</button>
+    <button class="tab-btn active" onclick="switchTab2('detector')">&#x1F3B5; Detector</button>
+    <button class="tab-btn"        onclick="switchTab2('harmonico')">&#x1F3BC; Harmonico</button>
+    <button class="tab-btn"        onclick="switchTab2('notas')">&#x1F3B9; Notas</button>
+    <button class="tab-btn"        onclick="switchTab2('acordes')">&#x1F3B8; Acordes</button>
   </div>
 
   <!-- TAB DETECTOR -->
@@ -983,9 +1154,13 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
     <!-- SUGESTÃO DO CAMPO HARMÔNICO — no lugar da forma de onda -->
     <div class="harmonic-suggest-card" style="position:relative;overflow:hidden">
       <div class="pro-lock" id="hsSuggestLock" style="border-radius:var(--r);display:none">
-        <div class="lock-icon">🔒</div>
+        <div class="lock-icon">&#x1F512;</div>
         <div class="lock-title">Recurso Pro</div>
         <p class="lock-sub">Veja os acordes do tom em tempo real com o plano Pro.</p>
+        <div class="lock-features">
+          <span class="lock-feat-chip">Acordes em tempo real</span>
+          <span class="lock-feat-chip">Campo Harmonico</span>
+        </div>
         <button class="lock-btn" onclick="showPaywall()">Desbloquear Pro</button>
       </div>
       <div class="hs-header">
@@ -1017,9 +1192,17 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
   <div class="tab-panel" id="tab-harmonico">
     <div class="harmonic-card">
       <div class="pro-lock" id="proLock">
-        <div class="lock-icon">🔒</div>
+        <div class="lock-icon">&#x1F512;</div>
         <div class="lock-title">Recurso Pro</div>
-        <p class="lock-sub">O Campo Harmônico está disponível no plano Pro. Acesso vitalício por R$29,90.</p>
+        <p class="lock-sub">Desbloqueie o Campo Harmonico e muito mais com o plano Pro. Acesso vitalicio por apenas R$29,90.</p>
+        <div class="lock-features">
+          <span class="lock-feat-chip">Deteccoes ilimitadas</span>
+          <span class="lock-feat-chip">Campo Harmonico</span>
+          <span class="lock-feat-chip">Acordes em tempo real</span>
+          <span class="lock-feat-chip">Dicas de preparacao</span>
+          <span class="lock-feat-chip">Notas com audio</span>
+          <span class="lock-feat-chip">Todas as escalas</span>
+        </div>
         <button class="lock-btn" onclick="showPaywall()">Desbloquear Pro</button>
       </div>
       <div class="card-label" style="margin-bottom:10px">Tônica</div>
@@ -1045,6 +1228,33 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
       <div id="freqTable" style="display:flex;flex-direction:column;gap:5px;margin-top:6px;"></div>
     </div>
   </div>
+
+  <!-- TAB ACORDES (BIBLIOTECA) -->
+  <div class="tab-panel" id="tab-acordes">
+    <div class="chord-lib-card">
+      <div class="chord-lib-label">Escolha a nota raiz</div>
+      <div class="chord-lib-roots" id="clRoots"></div>
+      <div class="chord-lib-label">Tipo de acorde</div>
+      <div class="chord-lib-types" id="clTypes"></div>
+      <div class="chord-lib-diagram" id="clDiagramArea">
+        <div class="cl-chord-title" id="clChordTitle">C Maior</div>
+        <div class="cl-chord-subtitle" id="clChordSubtitle">Selecione uma nota e um tipo</div>
+        <div class="cl-voicing-row">
+          <button class="cl-voicing-btn active" id="clVBtn0" onclick="selectClVoicing(0)">Basica / Aberta</button>
+          <button class="cl-voicing-btn" id="clVBtn1" onclick="selectClVoicing(1)">Barra / Alternativa</button>
+        </div>
+        <div class="cl-diagram-wrap">
+          <svg class="chord-diagram-svg" id="clDiagramSvg" viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg"></svg>
+          <div class="cl-notes-row" id="clNotesRow"></div>
+          <div class="cl-formula" id="clFormula"></div>
+        </div>
+      </div>
+    </div>
+    <div class="chord-lib-card">
+      <div class="chord-lib-label">Todos os acordes de <span id="clAllTitle">C</span></div>
+      <div class="chord-lib-grid" id="clAllGrid"></div>
+    </div>
+  </div>
 </div>
 
 <!-- PRO MODAL -->
@@ -1052,34 +1262,84 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
   <div class="pro-modal-card">
     <div class="pm-handle"></div>
     <div class="pm-header">
-      <div class="pm-icon">⚡</div>
+      <div class="pm-icon">&#x26A1;</div>
       <div>
         <div class="pm-title">Plano Pro Ativo</div>
-        <div class="pm-sub">Acesso vitalício desbloqueado · pague uma vez</div>
+        <div class="pm-sub">Acesso vitalicio desbloqueado</div>
       </div>
     </div>
+    <div class="pm-badge">&#x2B50; PAGAMENTO UNICO - SEM MENSALIDADE</div>
+
+    <div class="pm-section-title">Deteccao e Afinacao</div>
     <div class="pm-perks">
       <div class="pm-perk">
-        <div class="pm-perk-icon">∞</div>
-        <div class="pm-perk-text"><strong>Detecções ilimitadas</strong><span>Sem limite de notas detectadas — use à vontade</span></div>
+        <div class="pm-perk-icon">&#x221E;</div>
+        <div class="pm-perk-text"><strong>Deteccoes ilimitadas</strong><span>Sem limite de notas detectadas - use a vontade para treinar</span></div>
       </div>
       <div class="pm-perk">
-        <div class="pm-perk-icon">🎼</div>
-        <div class="pm-perk-text"><strong>Campo Harmônico completo</strong><span>Veja todos os 7 graus, funções e qualidades de qualquer tom</span></div>
-      </div>
-      <div class="pm-perk">
-        <div class="pm-perk-icon">🎵</div>
-        <div class="pm-perk-text"><strong>Acordes do tom em tempo real</strong><span>Sugestão automática de acordes enquanto você canta</span></div>
-      </div>
-      <div class="pm-perk">
-        <div class="pm-perk-icon">💡</div>
-        <div class="pm-perk-text"><strong>Dicas de preparação de acordes</strong><span>Toque em qualquer grau para ver como se preparar para ele</span></div>
-      </div>
-      <div class="pm-perk">
-        <div class="pm-perk-icon">🎹</div>
-        <div class="pm-perk-text"><strong>Aba de notas com áudio</strong><span>Ouça qualquer nota em tempo real para treinar o ouvido</span></div>
+        <div class="pm-perk-icon">&#x1F3AF;</div>
+        <div class="pm-perk-text"><strong>Precisao avancada</strong><span>Deteccao em tempo real com indicador de cents e afinacao</span></div>
       </div>
     </div>
+
+    <div class="pm-section-title">Harmonia e Teoria</div>
+    <div class="pm-perks">
+      <div class="pm-perk">
+        <div class="pm-perk-icon">&#x1F3BC;</div>
+        <div class="pm-perk-text"><strong>Campo Harmonico completo</strong><span>Veja todos os 7 graus, funcoes e qualidades de qualquer tom</span></div>
+      </div>
+      <div class="pm-perk">
+        <div class="pm-perk-icon">&#x1F3B5;</div>
+        <div class="pm-perk-text"><strong>Acordes do tom em tempo real</strong><span>Sugestao automatica de acordes enquanto voce canta</span></div>
+      </div>
+      <div class="pm-perk">
+        <div class="pm-perk-icon">&#x1F4A1;</div>
+        <div class="pm-perk-text"><strong>Dicas de preparacao de acordes</strong><span>Toque em qualquer grau para ver como se preparar para ele</span></div>
+      </div>
+      <div class="pm-perk">
+        <div class="pm-perk-icon">&#x1F3B6;</div>
+        <div class="pm-perk-text"><strong>Todas as escalas e modos</strong><span>Maior, Menor, Pentatonica Maior e Menor com todas as tonalidades</span></div>
+      </div>
+    </div>
+
+    <div class="pm-section-title">Acordes e Diagramas</div>
+    <div class="pm-perks">
+      <div class="pm-perk">
+        <div class="pm-perk-icon">&#x1F3B8;</div>
+        <div class="pm-perk-text"><strong>+300 diagramas de acordes</strong><span>Biblioteca completa com 27 tipos de acorde para todas as notas</span></div>
+      </div>
+      <div class="pm-perk">
+        <div class="pm-perk-icon">&#x270B;</div>
+        <div class="pm-perk-text"><strong>Posicoes abertas e com barre</strong><span>Duas posicoes para cada acorde - basica e alternativa</span></div>
+      </div>
+      <div class="pm-perk">
+        <div class="pm-perk-icon">&#x1F4D0;</div>
+        <div class="pm-perk-text"><strong>Formulas e intervalos</strong><span>Entenda a construcao de cada tipo de acorde com notas e intervalos</span></div>
+      </div>
+    </div>
+
+    <div class="pm-section-title">Audio e Treino</div>
+    <div class="pm-perks">
+      <div class="pm-perk">
+        <div class="pm-perk-icon">&#x1F3B9;</div>
+        <div class="pm-perk-text"><strong>Aba de notas com audio</strong><span>Ouca qualquer nota em tempo real para treinar o ouvido</span></div>
+      </div>
+      <div class="pm-perk">
+        <div class="pm-perk-icon">&#x1F4CA;</div>
+        <div class="pm-perk-text"><strong>Forma de onda ao vivo</strong><span>Visualize a onda sonora da sua voz em tempo real</span></div>
+      </div>
+    </div>
+
+    <div class="pm-price-row">
+      <div class="pm-price-left">
+        <div class="pm-price-amount">R$ 29,90</div>
+        <div class="pm-price-label">pagamento unico</div>
+      </div>
+      <div class="pm-price-right">
+        <div class="pm-price-tag">&#x2705; Acesso vitalicio</div>
+      </div>
+    </div>
+
     <button class="pm-close" onclick="closeProModal()">Fechar</button>
   </div>
 </div>
@@ -1138,21 +1398,24 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 <div id="paywallOverlay">
   <div class="paywall-card">
     <div id="pixOffer">
-      <div class="paywall-icon">🎵</div>
+      <div class="paywall-icon">&#x1F3B5;</div>
       <div class="paywall-title">Acesso Completo</div>
-      <p class="paywall-sub">Desbloqueie tudo com uma única compra sem mensalidade.</p>
+      <p class="paywall-sub">Desbloqueie tudo com uma unica compra. Sem mensalidade.</p>
       <div class="paywall-features">
-        <div class="paywall-feature"><div class="feat-icon">∞</div><span>Detecções ilimitadas</span></div>
-        <div class="paywall-feature"><div class="feat-icon">🎼</div><span>Campo Harmônico completo</span></div>
-        <div class="paywall-feature"><div class="feat-icon">🎵</div><span>Todas as escalas e modos</span></div>
-        <div class="paywall-feature"><div class="feat-icon">⚡</div><span>Acesso vitalício — pague uma vez</span></div>
+        <div class="paywall-feature"><div class="feat-icon">&#x221E;</div><span>Deteccoes ilimitadas</span></div>
+        <div class="paywall-feature"><div class="feat-icon">&#x1F3BC;</div><span>Campo Harmonico completo</span></div>
+        <div class="paywall-feature"><div class="feat-icon">&#x1F3B8;</div><span>+300 diagramas de acordes</span></div>
+        <div class="paywall-feature"><div class="feat-icon">&#x1F3B5;</div><span>Todas as escalas e modos</span></div>
+        <div class="paywall-feature"><div class="feat-icon">&#x1F4A1;</div><span>Dicas de preparacao de acordes</span></div>
+        <div class="paywall-feature"><div class="feat-icon">&#x1F3B9;</div><span>Notas com audio para treinar o ouvido</span></div>
+        <div class="paywall-feature"><div class="feat-icon">&#x26A1;</div><span>Acesso vitalicio - pague uma vez</span></div>
       </div>
       <div class="paywall-price">
         <strong>R$ 29,90</strong>
-        <span>pagamento único · sem mensalidade</span>
+        <span>pagamento unico - sem mensalidade</span>
       </div>
       <button id="btnCheckout" onclick="startCheckout()">Pagar com Pix</button>
-      <div class="paywall-dismiss" onclick="hidePaywall()">Continuar no plano grátis</div>
+      <div class="paywall-dismiss" onclick="hidePaywall()">Continuar no plano gratis</div>
     </div>
     <div id="pixQR" style="display:none;text-align:center">
       <div class="paywall-title" style="font-size:0.95rem;margin-bottom:6px">Pague com Pix</div>
@@ -1175,7 +1438,7 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
 
 
 function switchTab2(tab) {
-  const tabs = ['detector','harmonico','notas'];
+  const tabs = ['detector','harmonico','notas','acordes'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>{
     b.className='tab-btn'+(tabs[i]===tab?' active':'');
   });
@@ -1184,6 +1447,7 @@ function switchTab2(tab) {
   });
   if(tab==='harmonico') renderHarmonicField();
   if(tab==='notas') renderNotesTab();
+  if(tab==='acordes') renderChordLibrary();
 }
 
 // ── MUSIC THEORY ──────────────────────────────────────────────────────────────
@@ -1710,6 +1974,11 @@ const CHORD_SHAPES = {
     '7M': { v1:[1,[-1,3,2,0,0,0]],     v2:[8,[-1,8,10,9,10,8]]   },
     'sus2':{ v1:[1,[-1,3,0,0,1,3]],    v2:[8,[-1,8,10,10,8,8]]   },
     'sus4':{ v1:[1,[-1,3,3,0,1,1]],    v2:[8,[-1,8,10,10,11,8]]  },
+    '4#5': { v1:[1,[-1,3,2,1,1,0]],    v2:[8,[-1,8,10,9,10,8]]   },
+    '7#5': { v1:[1,[-1,3,2,3,1,0]],    v2:[8,[-1,8,10,9,10,8]]   },
+    'm7#5':{ v1:[3,[-1,3,4,3,4,3]],    v2:[8,[-1,8,9,8,9,8]]     },
+    '9#5': { v1:[1,[-1,3,2,1,3,0]],    v2:[8,[-1,8,10,9,10,8]]   },
+    'm9#5':{ v1:[3,[-1,3,4,3,4,3]],    v2:[8,[-1,8,9,8,9,8]]     },
   },
   'C#': {
     M:    { v1:[4,[4,4,6,6,6,4]],      v2:[9,[-1,9,11,11,11,9]]  },
@@ -1734,6 +2003,11 @@ const CHORD_SHAPES = {
     '7M': { v1:[4,[4,3,3,1,-1,-1]],    v2:[9,[-1,9,11,10,11,9]]  },
     'sus2':{ v1:[4,[4,4,6,6,4,4]],     v2:[9,[-1,9,11,11,9,9]]   },
     'sus4':{ v1:[4,[4,4,6,6,7,4]],     v2:[9,[-1,9,11,11,12,9]]  },
+    '4#5': { v1:[4,[4,4,6,5,7,4]],     v2:[9,[-1,9,11,10,12,9]]  },
+    '7#5': { v1:[4,[4,4,6,5,6,4]],     v2:[9,[-1,9,11,10,11,9]]  },
+    'm7#5':{ v1:[4,[4,4,5,4,5,4]],     v2:[9,[-1,9,10,9,10,9]]   },
+    '9#5': { v1:[4,[4,4,4,5,6,4]],     v2:[9,[-1,9,9,10,11,9]]   },
+    'm9#5':{ v1:[4,[4,4,5,4,5,4]],     v2:[9,[-1,9,10,9,10,9]]   },
   },
   'D': {
     M:    { v1:[1,[-1,-1,0,2,3,2]],    v2:[5,[-1,5,7,7,7,5]]     },
@@ -1758,6 +2032,11 @@ const CHORD_SHAPES = {
     '7M': { v1:[1,[-1,-1,0,2,2,2]],    v2:[5,[-1,5,7,6,7,5]]     },
     'sus2':{ v1:[1,[-1,-1,0,2,3,0]],   v2:[5,[-1,5,7,7,5,5]]     },
     'sus4':{ v1:[1,[-1,-1,0,2,3,3]],   v2:[5,[-1,5,7,7,8,5]]     },
+    '4#5': { v1:[1,[-1,-1,0,3,3,3]],   v2:[5,[-1,5,7,6,8,5]]     },
+    '7#5': { v1:[1,[-1,-1,0,3,1,2]],   v2:[5,[-1,5,7,6,7,5]]     },
+    'm7#5':{ v1:[1,[-1,-1,0,1,1,1]],   v2:[5,[-1,5,6,5,6,5]]     },
+    '9#5': { v1:[1,[-1,-1,0,3,1,0]],   v2:[5,[-1,5,5,6,7,5]]     },
+    'm9#5':{ v1:[1,[-1,-1,0,1,1,1]],   v2:[5,[-1,5,6,5,6,5]]     },
     '/F#':{ v1:[1,[2,-1,0,2,3,2]],     v2:[1,[2,-1,0,2,3,2]]     },
   },
   'D#': {
@@ -1783,6 +2062,11 @@ const CHORD_SHAPES = {
     '7M': { v1:[1,[-1,-1,1,3,3,3]],    v2:[6,[-1,6,8,7,8,6]]     },
     'sus2':{ v1:[1,[-1,-1,1,3,4,1]],   v2:[6,[-1,6,8,8,6,6]]     },
     'sus4':{ v1:[1,[-1,-1,1,3,4,4]],   v2:[6,[-1,6,8,8,9,6]]     },
+    '4#5': { v1:[1,[-1,-1,1,4,4,4]],   v2:[6,[-1,6,8,7,9,6]]     },
+    '7#5': { v1:[1,[-1,-1,1,4,2,3]],   v2:[6,[-1,6,8,7,8,6]]     },
+    'm7#5':{ v1:[1,[-1,-1,1,2,2,2]],   v2:[6,[-1,6,7,6,7,6]]     },
+    '9#5': { v1:[1,[-1,-1,1,4,2,1]],   v2:[6,[-1,6,6,7,8,6]]     },
+    'm9#5':{ v1:[1,[-1,-1,1,2,2,2]],   v2:[6,[-1,6,7,6,7,6]]     },
   },
   'E': {
     M:    { v1:[1,[0,2,2,1,0,0]],      v2:[7,[7,7,9,9,9,7]]      },
@@ -1807,6 +2091,11 @@ const CHORD_SHAPES = {
     '7M': { v1:[1,[0,2,1,1,0,0]],      v2:[7,[7,7,9,8,9,7]]      },
     'sus2':{ v1:[1,[0,2,2,4,0,0]],     v2:[7,[7,7,9,9,7,7]]      },
     'sus4':{ v1:[1,[0,2,2,2,0,0]],     v2:[7,[7,7,9,9,10,7]]     },
+    '4#5': { v1:[1,[0,3,2,2,0,0]],     v2:[7,[7,7,9,8,10,7]]     },
+    '7#5': { v1:[1,[0,3,0,1,0,0]],     v2:[7,[7,7,9,8,9,7]]      },
+    'm7#5':{ v1:[1,[0,2,1,0,0,0]],     v2:[7,[7,7,8,7,8,7]]      },
+    '9#5': { v1:[1,[0,3,0,1,0,2]],     v2:[7,[7,7,7,8,9,7]]      },
+    'm9#5':{ v1:[1,[0,2,1,0,3,0]],     v2:[7,[7,7,8,7,8,7]]      },
     '/G#':{ v1:[1,[4,2,2,1,0,0]],      v2:[1,[4,2,2,1,0,0]]      },
   },
   'F': {
@@ -1832,6 +2121,11 @@ const CHORD_SHAPES = {
     '7M': { v1:[1,[-1,3,3,2,1,0]],     v2:[8,[8,8,10,9,10,8]]    },
     'sus2':{ v1:[1,[1,3,3,3,1,1]],     v2:[8,[8,8,10,10,8,8]]    },
     'sus4':{ v1:[1,[1,3,3,1,4,1]],     v2:[8,[8,8,10,10,11,8]]   },
+    '4#5': { v1:[1,[1,3,2,2,1,1]],     v2:[8,[8,8,10,9,11,8]]    },
+    '7#5': { v1:[1,[1,3,2,2,1,1]],     v2:[8,[8,8,10,9,10,8]]    },
+    'm7#5':{ v1:[1,[1,3,2,1,1,1]],     v2:[8,[8,8,9,8,9,8]]      },
+    '9#5': { v1:[1,[1,3,2,2,1,3]],     v2:[8,[8,8,8,9,10,8]]     },
+    'm9#5':{ v1:[1,[1,3,2,1,1,1]],     v2:[8,[8,8,9,8,9,8]]      },
     '/A': { v1:[1,[-1,0,2,2,1,1]],     v2:[1,[-1,0,2,2,1,1]]     },
   },
   'F#': {
@@ -1857,6 +2151,11 @@ const CHORD_SHAPES = {
     '7M': { v1:[2,[-1,4,4,3,2,1]],     v2:[9,[9,9,11,10,11,9]]   },
     'sus2':{ v1:[2,[2,4,4,4,2,2]],     v2:[9,[9,9,11,11,9,9]]    },
     'sus4':{ v1:[2,[2,4,4,2,5,2]],     v2:[9,[9,9,11,11,12,9]]   },
+    '4#5': { v1:[2,[2,4,3,3,2,2]],     v2:[9,[9,9,11,10,12,9]]   },
+    '7#5': { v1:[2,[2,4,3,3,2,2]],     v2:[9,[9,9,11,10,11,9]]   },
+    'm7#5':{ v1:[2,[2,4,3,2,2,2]],     v2:[9,[9,9,10,9,10,9]]    },
+    '9#5': { v1:[2,[2,4,3,3,2,4]],     v2:[9,[9,9,9,10,11,9]]    },
+    'm9#5':{ v1:[2,[2,4,3,2,2,2]],     v2:[9,[9,9,10,9,10,9]]    },
   },
   'G': {
     M:    { v1:[1,[3,2,0,0,0,3]],      v2:[3,[3,3,5,5,5,3]]      },
@@ -1881,6 +2180,11 @@ const CHORD_SHAPES = {
     '7M': { v1:[1,[3,2,0,0,0,2]],      v2:[3,[3,3,5,4,5,3]]      },
     'sus2':{ v1:[1,[3,0,0,0,0,3]],     v2:[3,[3,3,5,5,3,3]]      },
     'sus4':{ v1:[1,[3,3,0,0,1,3]],     v2:[3,[3,3,5,5,6,3]]      },
+    '4#5': { v1:[3,[3,4,4,4,3,3]],     v2:[3,[3,3,5,4,6,3]]      },
+    '7#5': { v1:[1,[3,2,0,0,0,1]],     v2:[3,[3,3,5,4,5,3]]      },
+    'm7#5':{ v1:[3,[3,3,4,3,4,3]],     v2:[10,[10,10,11,10,11,10]] },
+    '9#5': { v1:[3,[3,4,3,4,3,5]],     v2:[3,[3,3,3,4,5,3]]      },
+    'm9#5':{ v1:[3,[3,3,4,3,4,3]],     v2:[10,[10,10,11,10,11,10]] },
     '/B': { v1:[1,[-1,2,0,0,0,3]],     v2:[1,[-1,2,0,0,0,3]]     },
   },
   'G#': {
@@ -1906,6 +2210,11 @@ const CHORD_SHAPES = {
     '7M': { v1:[4,[4,3,3,1,-1,-1]],    v2:[11,[11,11,13,12,13,11]] },
     'sus2':{ v1:[4,[4,4,6,6,4,4]],     v2:[11,[11,11,13,13,11,11]] },
     'sus4':{ v1:[4,[4,4,6,6,7,4]],     v2:[11,[11,11,13,13,14,11]] },
+    '4#5': { v1:[4,[4,5,5,5,4,4]],     v2:[11,[11,11,13,12,14,11]] },
+    '7#5': { v1:[4,[4,4,6,5,6,4]],     v2:[11,[11,11,13,12,13,11]] },
+    'm7#5':{ v1:[4,[4,4,5,4,5,4]],     v2:[11,[11,11,12,11,12,11]] },
+    '9#5': { v1:[4,[4,4,4,5,6,4]],     v2:[11,[11,11,11,12,13,11]] },
+    'm9#5':{ v1:[4,[4,4,5,4,5,4]],     v2:[11,[11,11,12,11,12,11]] },
   },
   'A': {
     M:    { v1:[1,[-1,0,2,2,2,0]],     v2:[5,[5,5,7,7,7,5]]      },
@@ -1930,6 +2239,11 @@ const CHORD_SHAPES = {
     '7M': { v1:[1,[-1,0,2,1,2,0]],     v2:[5,[5,5,7,6,7,5]]      },
     'sus2':{ v1:[1,[-1,0,2,2,0,0]],    v2:[5,[5,5,7,7,5,5]]      },
     'sus4':{ v1:[1,[-1,0,2,2,3,0]],    v2:[5,[5,5,7,7,8,5]]      },
+    '4#5': { v1:[1,[-1,0,3,2,3,1]],    v2:[5,[5,5,7,6,8,5]]      },
+    '7#5': { v1:[1,[-1,0,3,0,2,1]],    v2:[5,[5,5,7,6,7,5]]      },
+    'm7#5':{ v1:[1,[-1,0,1,0,1,0]],    v2:[5,[5,5,6,5,6,5]]      },
+    '9#5': { v1:[1,[-1,0,3,0,2,0]],    v2:[5,[5,5,5,6,7,5]]      },
+    'm9#5':{ v1:[1,[-1,0,1,0,1,0]],    v2:[5,[5,5,6,5,6,5]]      },
     '/C#':{ v1:[1,[-1,4,2,2,2,0]],     v2:[1,[-1,4,2,2,2,0]]     },
     '/E': { v1:[1,[0,0,2,2,2,0]],      v2:[1,[0,0,2,2,2,0]]      },
   },
@@ -1956,6 +2270,11 @@ const CHORD_SHAPES = {
     '7M': { v1:[1,[-1,1,3,2,3,1]],     v2:[6,[6,6,8,7,8,6]]      },
     'sus2':{ v1:[1,[-1,1,3,3,1,1]],    v2:[6,[6,6,8,8,6,6]]      },
     'sus4':{ v1:[1,[-1,1,3,3,4,1]],    v2:[6,[6,6,8,8,9,6]]      },
+    '4#5': { v1:[1,[-1,1,4,3,4,2]],    v2:[6,[6,6,8,7,9,6]]      },
+    '7#5': { v1:[1,[-1,1,4,1,3,2]],    v2:[6,[6,6,8,7,8,6]]      },
+    'm7#5':{ v1:[1,[-1,1,2,1,2,1]],    v2:[6,[6,6,7,6,7,6]]      },
+    '9#5': { v1:[1,[-1,1,4,1,3,1]],    v2:[6,[6,6,6,7,8,6]]      },
+    'm9#5':{ v1:[1,[-1,1,2,1,2,1]],    v2:[6,[6,6,7,6,7,6]]      },
     '/D': { v1:[1,[-1,-1,0,3,3,1]],    v2:[1,[-1,-1,0,3,3,1]]    },
   },
   'B': {
@@ -1981,6 +2300,11 @@ const CHORD_SHAPES = {
     '7M': { v1:[2,[-1,2,4,3,4,2]],     v2:[7,[7,7,9,8,9,7]]      },
     'sus2':{ v1:[2,[-1,2,4,4,2,2]],    v2:[7,[7,7,9,9,7,7]]      },
     'sus4':{ v1:[2,[-1,2,4,4,5,2]],    v2:[7,[7,7,9,9,10,7]]     },
+    '4#5': { v1:[2,[-1,2,4,3,5,2]],    v2:[7,[7,7,9,8,10,7]]     },
+    '7#5': { v1:[2,[-1,2,4,3,4,2]],    v2:[7,[7,7,9,8,9,7]]      },
+    'm7#5':{ v1:[2,[-1,2,3,2,3,2]],    v2:[7,[7,7,8,7,8,7]]      },
+    '9#5': { v1:[2,[-1,2,2,3,4,2]],    v2:[7,[7,7,7,8,9,7]]      },
+    'm9#5':{ v1:[2,[-1,2,3,2,3,2]],    v2:[7,[7,7,8,7,8,7]]      },
     '/D#':{ v1:[1,[-1,6,4,4,4,2]],     v2:[1,[-1,6,4,4,4,2]]     },
     '/F#':{ v1:[2,[2,2,4,4,4,2]],      v2:[2,[2,2,4,4,4,2]]      },
   },
@@ -2199,10 +2523,15 @@ function getChordNotes(rootIdx, quality) {
 const VARIANT_LABELS = {
   'M':'Maior', 'm':'Menor', 'd':'Dim°',
   '7':'Dom7', '7M':'Maj7', 'm7':'m7',
-  '9':'Dom9', 'sus2':'Sus2', 'sus4':'Sus4',
+  '4':'Sus4(M)', 'm4':'Sus4(m)', '5':'5ªJ(M)', 'm5':'5ªJ(m)',
+  '6':'6ª(M)', 'm6':'6ª(m)', '9':'Dom9', 'm9':'m9',
+  '11':'11ª(M)', 'm11':'m11', '13':'13ª(M)', 'm13':'m13',
+  '#5':'#5(M)', 'm#5':'#5(m)',
+  '4#5':'4(#5)', '7#5':'7(#5)', 'm7#5':'m7(#5)', '9#5':'9(#5)', 'm9#5':'m9(#5)',
+  'sus2':'Sus2', 'sus4':'Sus4',
 };
 // Tipos de acorde na ordem de exibição (as slash chords aparecem se existirem)
-const VARIANT_ORDER = ['M','m','d','7','7M','m7','9','sus2','sus4'];
+const VARIANT_ORDER = ['M','m','d','7','7M','m7','4','m4','5','m5','6','m6','9','m9','11','m11','13','m13','#5','m#5','4#5','7#5','m7#5','9#5','m9#5','sus2','sus4'];
 
 // Mapa qualidade→tipo interno (dos graus do campo harmônico)
 const QUALITY_TO_TYPE = { 'Maior':'M', 'Menor':'m', 'Dim':'d' };
@@ -2273,7 +2602,25 @@ const VARIANT_INTERVALS = {
   '7':   { iv:[0,4,7,10],    labels:['Fund.','3ªM','5ªJ','7ªm'], formula:'Fund. + 3ªM + 5ªJ + 7ª Menor' },
   '7M':  { iv:[0,4,7,11],    labels:['Fund.','3ªM','5ªJ','7ªM'], formula:'Fund. + 3ªM + 5ªJ + 7ª Maior' },
   'm7':  { iv:[0,3,7,10],    labels:['Fund.','3ªm','5ªJ','7ªm'], formula:'Fund. + 3ªm + 5ªJ + 7ª Menor' },
+  '4':   { iv:[0,5,7],       labels:['Fund.','4ªJ','5ªJ'],    formula:'Fund. + 4ª Justa + 5ª Justa (Maior)' },
+  'm4':  { iv:[0,3,5],       labels:['Fund.','3ªm','4ªJ'],    formula:'Fund. + 3ª Menor + 4ª Justa' },
+  '5':   { iv:[0,7],         labels:['Fund.','5ªJ'],           formula:'Fund. + 5ª Justa (Power Chord)' },
+  'm5':  { iv:[0,3,7],       labels:['Fund.','3ªm','5ªJ'],    formula:'Fund. + 3ª Menor + 5ª Justa' },
+  '6':   { iv:[0,4,7,9],     labels:['Fund.','3ªM','5ªJ','6ªM'], formula:'Fund. + 3ªM + 5ªJ + 6ª Maior' },
+  'm6':  { iv:[0,3,7,9],     labels:['Fund.','3ªm','5ªJ','6ªM'], formula:'Fund. + 3ªm + 5ªJ + 6ª Maior' },
   '9':   { iv:[0,4,7,10,2],  labels:['Fund.','3ªM','5ªJ','7ªm','9ª'], formula:'Fund. + 3ªM + 5ªJ + 7ªm + 9ª' },
+  'm9':  { iv:[0,3,7,10,2],  labels:['Fund.','3ªm','5ªJ','7ªm','9ª'], formula:'Fund. + 3ªm + 5ªJ + 7ªm + 9ª' },
+  '11':  { iv:[0,4,7,10,2,5],labels:['Fund.','3ªM','5ªJ','7ªm','9ª','11ª'], formula:'Fund. + 3ªM + 5ªJ + 7ªm + 9ª + 11ª' },
+  'm11': { iv:[0,3,7,10,2,5],labels:['Fund.','3ªm','5ªJ','7ªm','9ª','11ª'], formula:'Fund. + 3ªm + 5ªJ + 7ªm + 9ª + 11ª' },
+  '13':  { iv:[0,4,7,10,2,9],labels:['Fund.','3ªM','5ªJ','7ªm','9ª','13ª'], formula:'Fund. + 3ªM + 5ªJ + 7ªm + 9ª + 13ª' },
+  'm13': { iv:[0,3,7,10,2,9],labels:['Fund.','3ªm','5ªJ','7ªm','9ª','13ª'], formula:'Fund. + 3ªm + 5ªJ + 7ªm + 9ª + 13ª' },
+  '#5':  { iv:[0,4,8],       labels:['Fund.','3ªM','5ªaum'],  formula:'Fund. + 3ª Maior + 5ª Aumentada' },
+  'm#5': { iv:[0,3,8],       labels:['Fund.','3ªm','5ªaum'],  formula:'Fund. + 3ª Menor + 5ª Aumentada' },
+  '4#5': { iv:[0,5,8],       labels:['Fund.','4ªJ','5ªaum'],  formula:'Fund. + 4ª Justa + 5ª Aumentada' },
+  '7#5': { iv:[0,4,8,10],    labels:['Fund.','3ªM','5ªaum','7ªm'], formula:'Fund. + 3ªM + 5ªaum + 7ª Menor' },
+  'm7#5':{ iv:[0,3,8,10],    labels:['Fund.','3ªm','5ªaum','7ªm'], formula:'Fund. + 3ªm + 5ªaum + 7ª Menor' },
+  '9#5': { iv:[0,4,8,10,2],  labels:['Fund.','3ªM','5ªaum','7ªm','9ª'], formula:'Fund. + 3ªM + 5ªaum + 7ªm + 9ª' },
+  'm9#5':{ iv:[0,3,8,10,2],  labels:['Fund.','3ªm','5ªaum','7ªm','9ª'], formula:'Fund. + 3ªm + 5ªaum + 7ªm + 9ª' },
   'sus2':{ iv:[0,2,7],       labels:['Fund.','2ªM','5ªJ'],    formula:'Fund. + 2ª Maior + 5ª Justa' },
   'sus4':{ iv:[0,5,7],       labels:['Fund.','4ªJ','5ªJ'],    formula:'Fund. + 4ª Justa + 5ª Justa' },
 };
@@ -2318,6 +2665,147 @@ window.selectVoicing = (idx) => {
 };
 
 window.closeChordTip = () => document.getElementById('chordTipModal').classList.remove('open');
+
+// ── CHORD LIBRARY ─────────────────────────────────────────────────────────────
+let _clRoot = 'C', _clType = 'M', _clVoicing = 0, _clBuilt = false;
+
+function renderChordLibrary() {
+  if (_clBuilt) return;
+  _clBuilt = true;
+
+  const rootsEl = document.getElementById('clRoots');
+  NOTE_NAMES.forEach(n => {
+    const b = document.createElement('button');
+    b.className = 'cl-root-btn' + (n === _clRoot ? ' active' : '');
+    b.textContent = n;
+    b.setAttribute('data-testid', 'cl-root-' + n);
+    b.onclick = () => {
+      _clRoot = n; _clVoicing = 0;
+      rootsEl.querySelectorAll('.cl-root-btn').forEach(btn => {
+        btn.className = 'cl-root-btn' + (btn.textContent === n ? ' active' : '');
+      });
+      _updateClTypes();
+      _renderClDiagram();
+      _renderClAllGrid();
+    };
+    rootsEl.appendChild(b);
+  });
+
+  _updateClTypes();
+  _renderClDiagram();
+  _renderClAllGrid();
+}
+
+function _updateClTypes() {
+  const typesEl = document.getElementById('clTypes');
+  typesEl.innerHTML = '';
+  const shapeSet = CHORD_SHAPES[_clRoot] || {};
+  VARIANT_ORDER.forEach(key => {
+    const b = document.createElement('button');
+    const hasShape = !!shapeSet[key];
+    b.className = 'cl-type-btn' + (key === _clType ? ' active' : '') + (!hasShape ? ' unavailable' : '');
+    b.textContent = VARIANT_LABELS[key] || key;
+    b.setAttribute('data-testid', 'cl-type-' + key);
+    if (hasShape) {
+      b.onclick = () => {
+        _clType = key; _clVoicing = 0;
+        typesEl.querySelectorAll('.cl-type-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        b.classList.add('active');
+        _renderClDiagram();
+        _highlightClGrid();
+      };
+    }
+    typesEl.appendChild(b);
+  });
+  // Also add slash chords if any
+  Object.keys(shapeSet).filter(k => k.startsWith('/')).forEach(key => {
+    const b = document.createElement('button');
+    b.className = 'cl-type-btn' + (key === _clType ? ' active' : '');
+    b.textContent = key;
+    b.onclick = () => {
+      _clType = key; _clVoicing = 0;
+      typesEl.querySelectorAll('.cl-type-btn').forEach(btn => btn.classList.remove('active'));
+      b.classList.add('active');
+      _renderClDiagram();
+      _highlightClGrid();
+    };
+    typesEl.appendChild(b);
+  });
+}
+
+function _renderClDiagram() {
+  const rootIdx = NOTE_NAMES.indexOf(_clRoot);
+  const label = VARIANT_LABELS[_clType] || _clType;
+  document.getElementById('clChordTitle').textContent = _clRoot + ' ' + label;
+
+  const vi = VARIANT_INTERVALS[_clType];
+  document.getElementById('clChordSubtitle').textContent = vi ? vi.formula : 'Acorde com baixo alternativo';
+
+  document.getElementById('clVBtn0').className = 'cl-voicing-btn' + (_clVoicing === 0 ? ' active' : '');
+  document.getElementById('clVBtn1').className = 'cl-voicing-btn' + (_clVoicing === 1 ? ' active' : '');
+
+  const svgEl = document.getElementById('clDiagramSvg');
+  drawChordDiagram(svgEl, _clRoot, _clType, _clVoicing);
+
+  const notesEl = document.getElementById('clNotesRow');
+  notesEl.innerHTML = '';
+  if (vi && rootIdx >= 0) {
+    vi.iv.forEach((interval, i) => {
+      const ni = (rootIdx + interval + 12) % 12;
+      const chip = document.createElement('div');
+      chip.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:2px;';
+      chip.innerHTML = '<span class="chord-note-chip">' + NOTE_NAMES_PT[ni] + '</span><span class="chord-note-interval">' + vi.labels[i] + '</span>';
+      notesEl.appendChild(chip);
+    });
+    document.getElementById('clFormula').innerHTML = '<strong>Formula:</strong> ' + vi.formula;
+  } else {
+    document.getElementById('clFormula').innerHTML = '';
+  }
+}
+
+function _renderClAllGrid() {
+  const gridEl = document.getElementById('clAllGrid');
+  gridEl.innerHTML = '';
+  document.getElementById('clAllTitle').textContent = _clRoot;
+  const shapeSet = CHORD_SHAPES[_clRoot] || {};
+  const allKeys = [...VARIANT_ORDER, ...Object.keys(shapeSet).filter(k => k.startsWith('/'))].filter(k => shapeSet[k]);
+
+  allKeys.forEach(key => {
+    const item = document.createElement('div');
+    item.className = 'cl-grid-item' + (key === _clType ? ' active' : '');
+    const label = VARIANT_LABELS[key] || key;
+    item.innerHTML = '<div class="cl-grid-name">' + _clRoot + (key === 'M' ? '' : key.startsWith('/') ? key : key) + '</div><div class="cl-grid-type">' + label + '</div>';
+    item.setAttribute('data-testid', 'cl-grid-' + key);
+    item.onclick = () => {
+      _clType = key; _clVoicing = 0;
+      _renderClDiagram();
+      _highlightClGrid();
+      // Also update type buttons
+      document.getElementById('clTypes').querySelectorAll('.cl-type-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if ((btn.textContent === (VARIANT_LABELS[key] || key)) || btn.textContent === key) btn.classList.add('active');
+      });
+    };
+    gridEl.appendChild(item);
+  });
+}
+
+function _highlightClGrid() {
+  document.getElementById('clAllGrid').querySelectorAll('.cl-grid-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  const target = document.querySelector('[data-testid="cl-grid-' + _clType + '"]');
+  if (target) target.classList.add('active');
+}
+
+window.selectClVoicing = (idx) => {
+  _clVoicing = idx;
+  document.getElementById('clVBtn0').className = 'cl-voicing-btn' + (idx === 0 ? ' active' : '');
+  document.getElementById('clVBtn1').className = 'cl-voicing-btn' + (idx === 1 ? ' active' : '');
+  _renderClDiagram();
+};
 </script>
 </body>
 </html>

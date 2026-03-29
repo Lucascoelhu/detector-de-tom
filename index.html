@@ -1053,7 +1053,7 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
         <button class="voicing-btn"        onclick="selectVoicing(1)">🎼 Barra / Alternativa</button>
       </div>
       <div class="chord-diagram-wrap">
-        <svg class="chord-diagram-svg" id="ctDiagramSvg" viewBox="0 0 200 210" xmlns="http://www.w3.org/2000/svg"></svg>
+        <svg class="chord-diagram-svg" id="ctDiagramSvg" viewBox="0 0 200 230" xmlns="http://www.w3.org/2000/svg"></svg>
         <div class="chord-notes-row" id="ctChordNotes"></div>
       </div>
       <div class="chord-formula" id="ctChordFormula"></div>
@@ -1562,69 +1562,69 @@ window.switchCtTab = (tab) => {
 
 // ── Dados dos acordes ─────────────────────────────────────────────────────────
 // Formato: [fretBase, [E,A,D,G,B,e]]
-// fretBase = casa mínima mostrada no grid (1 = casa 1 = posição aberta)
-// valores: -1=mudo, 0=solta, N=casa N
-// Duas vozes por qualidade: v1=básica/aberta, v2=barra/alternativa
+// fretBase = primeira casa do grid (casa 1 = posição aberta)
+// -1=mudo, 0=solta, N=casa N (absoluta)
+// v1=básica/aberta, v2=barra/alternativa
 const CHORD_SHAPES = {
   'C': {
-    M: { v1:[1,[-1,3,2,0,1,0]], v2:[8,[8,10,10,9,8,8]] },
-    m: { v1:[1,[-1,3,5,5,4,3]], v2:[8,[8,10,10,8,8,8]] },
-    d: { v1:[1,[-1,3,4,5,4,3]], v2:[8,[8,9,10,11,10,8]] },
+    M: { v1:[1,[-1,3,2,0,1,0]],   v2:[8,[-1,8,10,9,8,8]] },
+    m: { v1:[1,[-1,3,5,5,4,3]],   v2:[8,[-1,8,10,9,8,8]] },
+    d: { v1:[1,[-1,3,4,5,4,3]],   v2:[8,[-1,9,10,11,10,8]] },
   },
   'C#': {
-    M: { v1:[4,[4,4,6,6,6,4]],  v2:[9,[9,11,11,10,9,9]] },
-    m: { v1:[4,[4,4,6,6,5,4]],  v2:[4,[4,4,6,6,5,4]] },
-    d: { v1:[4,[4,5,6,7,6,4]],  v2:[9,[9,10,11,12,11,9]] },
+    M: { v1:[4,[4,4,6,6,6,4]],    v2:[9,[-1,9,11,10,9,9]] },
+    m: { v1:[4,[4,4,6,6,5,4]],    v2:[9,[-1,9,11,10,9,9]] },
+    d: { v1:[4,[-1,4,5,6,5,4]],   v2:[9,[-1,9,10,11,10,9]] },
   },
   'D': {
-    M: { v1:[1,[-1,-1,0,2,3,2]], v2:[5,[5,5,7,7,7,5]] },
-    m: { v1:[1,[-1,-1,0,2,3,1]], v2:[5,[5,5,7,7,6,5]] },
-    d: { v1:[1,[-1,-1,0,1,3,1]], v2:[4,[4,5,6,7,6,4]] },
+    M: { v1:[1,[-1,-1,0,2,3,2]],  v2:[5,[-1,5,7,7,7,5]] },
+    m: { v1:[1,[-1,-1,0,2,3,1]],  v2:[5,[-1,5,7,7,6,5]] },
+    d: { v1:[1,[-1,-1,0,1,3,1]],  v2:[4,[-1,5,6,7,6,5]] },
   },
   'D#': {
-    M: { v1:[6,[6,6,8,8,8,6]],  v2:[1,[-1,-1,1,3,4,3]] },
-    m: { v1:[6,[6,6,8,8,7,6]],  v2:[1,[-1,-1,1,3,4,2]] },
-    d: { v1:[5,[5,6,7,8,7,5]],  v2:[1,[-1,-1,1,2,4,2]] },
+    M: { v1:[1,[-1,-1,1,3,4,3]],  v2:[6,[-1,6,8,8,8,6]] },
+    m: { v1:[1,[-1,-1,1,3,4,2]],  v2:[6,[-1,6,8,8,7,6]] },
+    d: { v1:[1,[-1,-1,1,2,4,2]],  v2:[5,[-1,6,7,8,7,6]] },
   },
   'E': {
-    M: { v1:[1,[0,2,2,1,0,0]],  v2:[7,[7,7,9,9,9,7]] },
-    m: { v1:[1,[0,2,2,0,0,0]],  v2:[7,[7,7,9,9,8,7]] },
-    d: { v1:[1,[0,1,2,3,2,0]],  v2:[6,[6,7,8,9,8,6]] },
+    M: { v1:[1,[0,2,2,1,0,0]],    v2:[7,[7,7,9,9,9,7]] },
+    m: { v1:[1,[0,2,2,0,0,0]],    v2:[7,[7,7,9,9,8,7]] },
+    d: { v1:[1,[0,1,2,3,2,0]],    v2:[6,[6,7,8,9,8,6]] },
   },
   'F': {
-    M: { v1:[1,[1,1,2,3,3,1]],  v2:[8,[8,8,10,10,10,8]] },
-    m: { v1:[1,[1,1,3,3,2,1]],  v2:[8,[8,8,10,10,9,8]] },
-    d: { v1:[1,[1,2,3,4,3,1]],  v2:[7,[7,8,9,10,9,7]] },
+    M: { v1:[1,[1,1,2,3,3,1]],    v2:[8,[8,8,10,10,10,8]] },
+    m: { v1:[1,[1,1,3,3,2,1]],    v2:[8,[8,8,10,10,9,8]] },
+    d: { v1:[1,[1,2,3,4,3,1]],    v2:[7,[7,8,9,10,9,7]] },
   },
   'F#': {
-    M: { v1:[2,[2,2,3,4,4,2]],  v2:[9,[9,9,11,11,11,9]] },
-    m: { v1:[2,[2,2,4,4,3,2]],  v2:[9,[9,9,11,11,10,9]] },
-    d: { v1:[2,[2,3,4,5,4,2]],  v2:[8,[8,9,10,11,10,8]] },
+    M: { v1:[2,[2,2,3,4,4,2]],    v2:[9,[9,9,11,11,11,9]] },
+    m: { v1:[2,[2,2,4,4,3,2]],    v2:[9,[9,9,11,11,10,9]] },
+    d: { v1:[2,[2,3,4,5,4,2]],    v2:[8,[8,9,10,11,10,8]] },
   },
   'G': {
-    M: { v1:[1,[3,2,0,0,0,3]],  v2:[3,[3,3,5,5,5,3]] },
-    m: { v1:[1,[3,1,0,0,3,3]],  v2:[3,[3,3,5,5,4,3]] },
-    d: { v1:[2,[2,3,4,5,4,2]],  v2:[3,[3,4,5,6,5,3]] },
+    M: { v1:[1,[3,2,0,0,0,3]],    v2:[3,[3,3,5,5,5,3]] },
+    m: { v1:[1,[3,1,0,0,3,3]],    v2:[3,[3,3,5,5,4,3]] },
+    d: { v1:[2,[2,3,4,5,4,2]],    v2:[3,[3,4,5,6,5,3]] },
   },
   'G#': {
-    M: { v1:[4,[4,4,5,6,6,4]],  v2:[11,[11,11,13,13,13,11]] },
-    m: { v1:[4,[4,4,6,6,5,4]],  v2:[4,[4,4,6,6,5,4]] },
-    d: { v1:[4,[4,5,6,7,6,4]],  v2:[9,[9,10,11,12,11,9]] },
+    M: { v1:[4,[4,4,5,6,6,4]],    v2:[4,[4,4,6,6,6,4]] },
+    m: { v1:[4,[4,4,6,6,5,4]],    v2:[4,[4,4,6,6,5,4]] },
+    d: { v1:[4,[4,5,6,7,6,4]],    v2:[9,[-1,10,11,12,11,9]] },
   },
   'A': {
-    M: { v1:[1,[-1,0,2,2,2,0]], v2:[5,[5,5,7,7,7,5]] },
-    m: { v1:[1,[-1,0,2,2,1,0]], v2:[5,[5,5,7,7,6,5]] },
-    d: { v1:[1,[-1,0,1,2,1,0]], v2:[5,[5,6,7,8,7,5]] },
+    M: { v1:[1,[-1,0,2,2,2,0]],   v2:[5,[5,5,7,7,7,5]] },
+    m: { v1:[1,[-1,0,2,2,1,0]],   v2:[5,[5,5,7,7,6,5]] },
+    d: { v1:[1,[-1,0,1,2,1,0]],   v2:[5,[5,6,7,8,7,5]] },
   },
   'A#': {
-    M: { v1:[1,[-1,1,3,3,3,1]], v2:[6,[6,6,8,8,8,6]] },
-    m: { v1:[1,[-1,1,3,3,2,1]], v2:[6,[6,6,8,8,7,6]] },
-    d: { v1:[1,[-1,1,2,3,2,1]], v2:[6,[6,7,8,9,8,6]] },
+    M: { v1:[1,[-1,1,3,3,3,1]],   v2:[6,[6,6,8,8,8,6]] },
+    m: { v1:[1,[-1,1,3,3,2,1]],   v2:[6,[6,6,8,8,7,6]] },
+    d: { v1:[1,[-1,1,2,3,2,1]],   v2:[6,[6,7,8,9,8,6]] },
   },
   'B': {
-    M: { v1:[2,[-1,2,4,4,4,2]], v2:[7,[7,7,9,9,9,7]] },
-    m: { v1:[2,[-1,2,4,4,3,2]], v2:[7,[7,7,9,9,8,7]] },
-    d: { v1:[2,[-1,2,3,4,3,2]], v2:[7,[7,8,9,10,9,7]] },
+    M: { v1:[2,[-1,2,4,4,4,2]],   v2:[7,[7,7,9,9,9,7]] },
+    m: { v1:[2,[-1,2,4,4,3,2]],   v2:[7,[7,7,9,9,8,7]] },
+    d: { v1:[2,[-1,2,3,4,3,2]],   v2:[7,[7,8,9,10,9,7]] },
   },
 };
 
@@ -1638,16 +1638,18 @@ function drawChordDiagram(svgEl, rootName, quality, voicingIdx) {
 
   svgEl.innerHTML = '';
 
-  const W=200, H=210;
-  const marginL=32, marginT=44, strW=24, fretH=30, nStr=6, nFret=5;
-  const gridW = strW * (nStr-1);  // 120
-  const gridH = fretH * nFret;    // 150
+  const W=200, H=230;
+  svgEl.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const marginL=36, marginT=54, strW=24, fretH=30, nStr=6, nFret=5;
+  const gridW = strW * (nStr - 1);  // 120
+  const gridH = fretH * nFret;       // 150
 
   const isLight = document.documentElement.classList.contains('light');
-  const colLine = isLight ? '#c8c8e0' : '#343450';
+  const colLine = isLight ? '#c0c0d8' : '#343450';
   const colText = isLight ? '#5a5a80' : '#9898b8';
   const colDot  = '#6c63ff';
-  const colMute = isLight ? '#9898b8' : '#555570';
+  const colMute = isLight ? '#a0a0b8' : '#666688';
   const colNut  = isLight ? '#181828' : '#eeeeff';
   const colBg   = isLight ? '#ffffff' : '#1a1a28';
 
@@ -1660,110 +1662,115 @@ function drawChordDiagram(svgEl, rootName, quality, voicingIdx) {
   };
 
   // Fundo
-  svgEl.appendChild(mk('rect', {x:0,y:0,width:W,height:H,fill:colBg}));
+  svgEl.appendChild(mk('rect', {x:0, y:0, width:W, height:H, fill:colBg}));
 
   if (!shapeSet) {
-    svgEl.appendChild(mk('text', {x:W/2,y:H/2,'text-anchor':'middle','font-size':'11','fill':colText,'font-family':'Nunito,sans-serif'}, 'Diagrama indisponível'));
+    svgEl.appendChild(mk('text', {x:W/2, y:H/2, 'text-anchor':'middle',
+      'font-size':'11', 'fill':colText, 'font-family':'Nunito,sans-serif'}, 'Diagrama indisponível'));
     return;
   }
 
   // Seleciona voicing
-  const vi = (voicingIdx === undefined ? _chordVoicing : voicingIdx);
-  const voicingKey = vi === 0 ? 'v1' : 'v2';
-  const [fretBase, frets] = shapeSet[voicingKey];
+  const vi = (voicingIdx !== undefined ? voicingIdx : _chordVoicing);
+  const [fretBase, frets] = shapeSet[vi === 0 ? 'v1' : 'v2'];
 
-  // ── Calcula a janela de casas exibida ──────────────────────────────────────
-  // Casas reais pressionadas (>0)
-  const pressed = frets.filter(f => f > 0);
-  // Se fretBase=1 e min pressionado=0 (solta), mostra do 0 (pestana)
-  // gridStart = primeira casa do grid (linha 0 = pestana, linha 1 = casa 1...)
-  // Os pontos ficam em (fret - fretBase + 1) dentro do grid [1..nFret]
-  // fretBase indica qual casa é a "linha 1" do diagrama
-  const gridStart = fretBase; // casa que corresponde à linha horizontal 1
+  // Pestana grossa só quando fretBase === 1
+  const showNut = fretBase === 1;
 
-  // ── Label de posição (ex: 5fr) ─────────────────────────────────────────────
-  if (fretBase > 1) {
+  // ── Label de posição ────────────────────────────────────────────────────────
+  if (!showNut) {
     svgEl.appendChild(mk('text', {
-      x: marginL - 6, y: marginT + fretH * 0.65,
-      'text-anchor':'end','font-size':'10','fill':colText,
-      'font-family':'Nunito,sans-serif','font-weight':'700'
+      x: marginL - 5, y: marginT + fretH * 0.7,
+      'text-anchor':'end', 'font-size':'10', 'fill':colText,
+      'font-family':'Nunito,sans-serif', 'font-weight':'700'
     }, fretBase + 'fr'));
   }
 
-  // ── Linhas verticais (cordas) ──────────────────────────────────────────────
+  // ── Cordas verticais ────────────────────────────────────────────────────────
   for (let s = 0; s < nStr; s++) {
     const x = marginL + s * strW;
-    svgEl.appendChild(mk('line', {x1:x,y1:marginT,x2:x,y2:marginT+gridH,stroke:colLine,'stroke-width':'1.5'}));
-  }
-
-  // ── Linhas horizontais (casas) ─────────────────────────────────────────────
-  for (let f = 0; f <= nFret; f++) {
-    const y = marginT + f * fretH;
-    const isNut = fretBase === 1 && f === 0;
     svgEl.appendChild(mk('line', {
-      x1:marginL,y1:y,x2:marginL+gridW,y2:y,
-      stroke: isNut ? colNut : colLine,
-      'stroke-width': isNut ? '4' : '1.5'
+      x1:x, y1:marginT, x2:x, y2:marginT + gridH,
+      stroke:colLine, 'stroke-width':'1.5'
     }));
   }
 
-  // ── Labels de corda (E A D G B e) ─────────────────────────────────────────
-  ['E','A','D','G','B','e'].forEach((s, i) => {
+  // ── Casas horizontais ───────────────────────────────────────────────────────
+  for (let f = 0; f <= nFret; f++) {
+    const y = marginT + f * fretH;
+    svgEl.appendChild(mk('line', {
+      x1:marginL, y1:y, x2:marginL + gridW, y2:y,
+      stroke: (showNut && f === 0) ? colNut : colLine,
+      'stroke-width': (showNut && f === 0) ? '4' : '1.5'
+    }));
+  }
+
+  // ── Labels de corda ─────────────────────────────────────────────────────────
+  const strNames = ['E','A','D','G','B','e'];
+  strNames.forEach((s, i) => {
     svgEl.appendChild(mk('text', {
-      x: marginL + i * strW, y: marginT - 12,
-      'text-anchor':'middle','font-size':'9','fill':colText,'font-family':'Nunito,sans-serif'
+      x: marginL + i * strW, y: marginT - 28,
+      'text-anchor':'middle', 'font-size':'9', 'fill':colText, 'font-family':'Nunito,sans-serif'
     }, s));
   });
 
-  // ── Detecta barré: fret mais baixo pressionado em 2+ cordas não-consecutivas ─
-  // Regra: barré existe se o fretBase (ou primeiro fret pressionado = fretBase)
-  // aparece em cordas que cobrem pelo menos 2 posições diferentes
-  const barFret = pressed.length > 0 ? Math.min(...pressed) : -1;
-  const barStrings = frets.reduce((acc, f, si) => { if (f === barFret) acc.push(si); return acc; }, []);
-  // Barré válido: ≥2 cordas e cobre o span (todas entre first e last devem ser barradas ou não-mudo)
-  const hasBar = barStrings.length >= 2 && (barStrings[barStrings.length-1] - barStrings[0]) >= 1;
+  // ── Detecção de barré ───────────────────────────────────────────────────────
+  // Só considera cordas NÃO-mudas para detectar barré
+  // Barré = mesma casa em ≥2 cordas consecutivas (sem -1 entre elas no span)
+  const pressedFrets = frets.filter(f => f > 0);
+  if (pressedFrets.length > 0) {
+    const barFret = Math.min(...pressedFrets);
+    // Índices das cordas com esse fret (apenas não-mudas)
+    const barIdx = frets.reduce((acc, f, si) => { if (f === barFret) acc.push(si); return acc; }, []);
 
-  // Desenha barré ANTES dos pontos individuais (fica embaixo)
-  if (hasBar) {
-    const barY = marginT + (barFret - gridStart) * fretH + fretH * 0.5;
-    const x1   = marginL + barStrings[0] * strW;
-    const x2   = marginL + barStrings[barStrings.length-1] * strW;
-    svgEl.appendChild(mk('rect', {
-      x: x1 - 10, y: barY - 10, width: (x2 - x1) + 20, height: 20,
-      rx:'10', fill:colDot, opacity:'0.85'
-    }));
+    if (barIdx.length >= 2) {
+      const first = barIdx[0], last = barIdx[barIdx.length - 1];
+      // Verifica se nenhuma corda ENTRE first e last é muda (-1)
+      let spanClean = true;
+      for (let si = first; si <= last; si++) {
+        if (frets[si] === -1) { spanClean = false; break; }
+      }
+      if (spanClean && (last - first) >= 1) {
+        const barRow = barFret - fretBase; // 0-based
+        const barY   = marginT + barRow * fretH + fretH / 2;
+        const x1 = marginL + first * strW;
+        const x2 = marginL + last  * strW;
+        // Cápsula de barré
+        svgEl.appendChild(mk('rect', {
+          x: x1 - 11, y: barY - 10,
+          width: (x2 - x1) + 22, height: 20,
+          rx:'10', fill:colDot, opacity:'0.9'
+        }));
+      }
+    }
   }
 
-  // ── Pontos de dedo, X e O ──────────────────────────────────────────────────
+  // ── Pontos, X e O ───────────────────────────────────────────────────────────
+  const xoY = marginT - 16; // Y dos símbolos acima da grade
   frets.forEach((f, si) => {
     const x = marginL + si * strW;
-
     if (f === -1) {
-      // Mudo (X) — acima da pestana
+      // Mudo — X pequeno acima
       svgEl.appendChild(mk('text', {
-        x, y: marginT - 26,
-        'text-anchor':'middle','font-size':'13','fill':colMute,
-        'font-family':'Nunito,sans-serif','font-weight':'700'
-      }, '✕'));
+        x, y: xoY,
+        'text-anchor':'middle', 'font-size':'12', 'fill':colMute,
+        'font-family':'Arial,sans-serif', 'font-weight':'700'
+      }, '×'));
     } else if (f === 0) {
-      // Solta (O) — acima da pestana
+      // Solta — círculo vazio acima
       svgEl.appendChild(mk('circle', {
-        cx:x, cy:marginT - 26, r:'6',
+        cx:x, cy: xoY - 5, r:'5',
         fill:'none', stroke:colDot, 'stroke-width':'1.8'
       }));
     } else {
-      // Dedo pressionado
-      // Posição vertical: centro entre linha (f-gridStart) e (f-gridStart+1)
-      const row = f - gridStart; // 0-based row dentro do grid
-      const cy  = marginT + row * fretH + fretH * 0.5;
-
-      // Se já foi coberto pela barré neste ponto exato, não duplica o círculo
-      // (mas podemos desenhar mesmo assim — fica mais escuro, tudo bem)
+      // Dedo pressionado — círculo sólido dentro da grade
+      const row = f - fretBase; // 0-based (0 = primeira casa do grid)
+      const cy  = marginT + row * fretH + fretH / 2;
       svgEl.appendChild(mk('circle', {cx:x, cy, r:'10', fill:colDot}));
       svgEl.appendChild(mk('text', {
         x, y: cy + 4,
-        'text-anchor':'middle','font-size':'9','fill':'#fff',
-        'font-family':'Nunito,sans-serif','font-weight':'700'
+        'text-anchor':'middle', 'font-size':'9', 'fill':'#fff',
+        'font-family':'Nunito,sans-serif', 'font-weight':'700'
       }, String(f)));
     }
   });

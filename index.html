@@ -63,7 +63,15 @@
       const pendingPay = localStorage.getItem(LS_PAY_KEY);
       if (pendingPay) {
         window._vp._pendingPaymentId = pendingPay;
-        setTimeout(() => openRegisterModal(), 600);
+        // Espera o DOM + módulo estarem prontos
+        setTimeout(() => {
+          const modal = document.getElementById('registerModal');
+          if (modal) {
+            modal.classList.add('open');
+            const errEl = document.getElementById('regError');
+            if (errEl) errEl.textContent = '';
+          }
+        }, 800);
       }
     }
   });

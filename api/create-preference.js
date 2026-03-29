@@ -4,7 +4,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const { uid, email } = req.body;
-  if (!uid || !email) return res.status(400).json({ error: 'uid e email obrigatórios' });
+  if (!uid) return res.status(400).json({ error: 'uid obrigatório' });
 
   const mpClient = new MercadoPagoConfig({
     accessToken: process.env.MP_ACCESS_TOKEN,
@@ -19,7 +19,7 @@ module.exports = async function handler(req, res) {
         payment_method_id: 'pix',
         external_reference: uid,
         payer: {
-          email,
+          email: email || 'guest@detector-de-tom.vercel.app',
           first_name: 'Usuario',
           last_name: 'VocalPitch',
         },

@@ -791,6 +791,22 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
   background:rgba(108,99,255,0.1);
 }
 .voicing-btn:hover:not(.active) { border-color:var(--border2); color:var(--sub); }
+
+/* Seletor de variantes de acorde */
+.variant-row {
+  display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px;
+}
+.variant-chip {
+  padding:4px 9px; border:1.5px solid var(--border);
+  border-radius:20px; font-family:'Nunito',sans-serif; font-size:0.66rem;
+  font-weight:700; cursor:pointer; background:var(--surface); color:var(--muted);
+  transition:all 0.15s; white-space:nowrap;
+}
+.variant-chip.active {
+  border-color:var(--accent); color:var(--accent);
+  background:rgba(108,99,255,0.1);
+}
+.variant-chip:hover:not(.active) { border-color:var(--border2); color:var(--sub); }
 </style>
 </head>
 <body>
@@ -1047,6 +1063,8 @@ canvas#waveCanvas { width:100%; height:32px; display:block; border-radius:5px; }
       <button class="ct-tab"        onclick="switchCtTab('dicas')">💡 Dicas</button>
     </div>
     <div class="ct-panel active" id="ctPanelAcorde">
+      <!-- Seletor de variante -->
+      <div class="variant-row" id="ctVariantRow"></div>
       <!-- Botões de posição -->
       <div class="voicing-toggle">
         <button class="voicing-btn active" onclick="selectVoicing(0)">🎸 Básica / Aberta</button>
@@ -1562,69 +1580,151 @@ window.switchCtTab = (tab) => {
 
 // ── Dados dos acordes ─────────────────────────────────────────────────────────
 // Formato: [fretBase, [E,A,D,G,B,e]]
-// fretBase = primeira casa do grid (casa 1 = posição aberta)
-// -1=mudo, 0=solta, N=casa N (absoluta)
-// v1=básica/aberta, v2=barra/alternativa
+// fretBase = primeira casa do grid (1 = posição aberta/pestana)
+// -1=mudo, 0=solta, N=casa N (absoluta, 1-based)  máx. 4 dedos por acorde
+// v1=básica/aberta  v2=barra/alternativa
+// Tipos: M=Maior m=Menor d=Dim 7=Dom7 7M=Maj7 m7=min7 9=Dom9 sus2 sus4 /X=baixo
 const CHORD_SHAPES = {
   'C': {
-    M: { v1:[1,[-1,3,2,0,1,0]],   v2:[8,[-1,8,10,9,8,8]] },
-    m: { v1:[1,[-1,3,5,5,4,3]],   v2:[8,[-1,8,10,9,8,8]] },
-    d: { v1:[1,[-1,3,4,5,4,3]],   v2:[8,[-1,9,10,11,10,8]] },
+    M:    { v1:[1,[-1,3,2,0,1,0]],   v2:[8,[-1,8,10,9,8,8]]   },
+    m:    { v1:[3,[-1,3,5,5,4,3]],   v2:[8,[-1,8,10,8,8,8]]   },
+    d:    { v1:[1,[-1,3,4,5,4,-1]],  v2:[8,[-1,9,10,11,10,-1]] },
+    '7':  { v1:[1,[-1,3,2,3,1,0]],   v2:[8,[-1,8,10,8,8,8]]   },
+    '7M': { v1:[1,[-1,3,2,0,0,0]],   v2:[7,[-1,7,9,9,8,7]]    },
+    'm7': { v1:[3,[-1,3,5,3,4,3]],   v2:[8,[-1,8,10,8,8,8]]   },
+    '9':  { v1:[1,[-1,3,2,0,3,0]],   v2:[8,[-1,8,8,8,9,8]]    },
+    'sus2':{ v1:[1,[-1,3,0,0,1,3]],  v2:[3,[-1,3,5,5,3,3]]    },
+    'sus4':{ v1:[1,[-1,3,3,0,1,1]],  v2:[8,[-1,8,10,10,8,8]]  },
   },
   'C#': {
-    M: { v1:[4,[4,4,6,6,6,4]],    v2:[9,[-1,9,11,10,9,9]] },
-    m: { v1:[4,[4,4,6,6,5,4]],    v2:[9,[-1,9,11,10,9,9]] },
-    d: { v1:[4,[-1,4,5,6,5,4]],   v2:[9,[-1,9,10,11,10,9]] },
+    M:    { v1:[4,[4,4,6,6,6,4]],    v2:[9,[-1,9,11,10,9,9]]  },
+    m:    { v1:[4,[4,4,6,6,5,4]],    v2:[9,[-1,9,11,9,9,9]]   },
+    d:    { v1:[4,[-1,4,5,6,5,-1]],  v2:[9,[-1,9,10,11,10,-1]] },
+    '7':  { v1:[4,[4,4,6,4,6,4]],    v2:[9,[-1,9,11,9,9,9]]   },
+    '7M': { v1:[4,[4,3,3,1,-1,-1]],  v2:[8,[-1,8,10,9,8,-1]]  },
+    'm7': { v1:[4,[4,4,6,4,5,4]],    v2:[9,[-1,9,11,9,10,9]]  },
+    '9':  { v1:[4,[4,4,4,4,6,4]],    v2:[9,[-1,9,9,9,11,9]]   },
+    'sus2':{ v1:[4,[4,4,6,6,4,4]],   v2:[4,[4,4,6,6,4,4]]     },
+    'sus4':{ v1:[4,[4,4,6,6,7,4]],   v2:[9,[-1,9,11,11,9,9]]  },
   },
   'D': {
-    M: { v1:[1,[-1,-1,0,2,3,2]],  v2:[5,[-1,5,7,7,7,5]] },
-    m: { v1:[1,[-1,-1,0,2,3,1]],  v2:[5,[-1,5,7,7,6,5]] },
-    d: { v1:[1,[-1,-1,0,1,3,1]],  v2:[4,[-1,5,6,7,6,5]] },
+    M:    { v1:[1,[-1,-1,0,2,3,2]],  v2:[5,[-1,5,7,7,7,5]]    },
+    m:    { v1:[1,[-1,-1,0,2,3,1]],  v2:[5,[-1,5,7,7,6,5]]    },
+    d:    { v1:[1,[-1,-1,0,1,3,1]],  v2:[4,[-1,5,6,7,6,-1]]   },
+    '7':  { v1:[1,[-1,-1,0,2,1,2]],  v2:[5,[-1,5,7,5,7,5]]    },
+    '7M': { v1:[1,[-1,-1,0,2,2,2]],  v2:[5,[-1,5,7,6,7,5]]    },
+    'm7': { v1:[1,[-1,-1,0,2,1,1]],  v2:[5,[-1,5,7,5,6,5]]    },
+    '9':  { v1:[1,[-1,-1,0,2,1,0]],  v2:[5,[-1,5,5,5,7,5]]    },
+    'sus2':{ v1:[1,[-1,-1,0,2,3,0]], v2:[5,[-1,5,7,7,5,5]]    },
+    'sus4':{ v1:[1,[-1,-1,0,2,3,3]], v2:[5,[-1,5,7,7,8,5]]    },
+    '/F#':{ v1:[1,[2,-1,0,2,3,2]],   v2:[1,[2,-1,0,2,3,2]]    },
   },
   'D#': {
-    M: { v1:[1,[-1,-1,1,3,4,3]],  v2:[6,[-1,6,8,8,8,6]] },
-    m: { v1:[1,[-1,-1,1,3,4,2]],  v2:[6,[-1,6,8,8,7,6]] },
-    d: { v1:[1,[-1,-1,1,2,4,2]],  v2:[5,[-1,6,7,8,7,6]] },
+    M:    { v1:[1,[-1,-1,1,3,4,3]],  v2:[6,[-1,6,8,8,8,6]]    },
+    m:    { v1:[1,[-1,-1,1,3,4,2]],  v2:[6,[-1,6,8,8,7,6]]    },
+    d:    { v1:[1,[-1,-1,1,2,4,2]],  v2:[5,[-1,6,7,8,7,-1]]   },
+    '7':  { v1:[1,[-1,-1,1,3,2,3]],  v2:[6,[-1,6,8,6,8,6]]    },
+    '7M': { v1:[1,[-1,-1,1,3,3,3]],  v2:[6,[-1,6,8,7,8,6]]    },
+    'm7': { v1:[1,[-1,-1,1,3,2,2]],  v2:[6,[-1,6,8,6,7,6]]    },
+    '9':  { v1:[6,[-1,6,6,6,8,6]],   v2:[6,[-1,6,6,6,8,6]]    },
+    'sus2':{ v1:[1,[-1,-1,1,3,4,1]], v2:[6,[-1,6,8,8,6,6]]    },
+    'sus4':{ v1:[1,[-1,-1,1,3,4,4]], v2:[6,[-1,6,8,8,9,6]]    },
   },
   'E': {
-    M: { v1:[1,[0,2,2,1,0,0]],    v2:[7,[7,7,9,9,9,7]] },
-    m: { v1:[1,[0,2,2,0,0,0]],    v2:[7,[7,7,9,9,8,7]] },
-    d: { v1:[1,[0,1,2,3,2,0]],    v2:[6,[6,7,8,9,8,6]] },
+    M:    { v1:[1,[0,2,2,1,0,0]],    v2:[7,[7,7,9,9,9,7]]     },
+    m:    { v1:[1,[0,2,2,0,0,0]],    v2:[7,[7,7,9,9,8,7]]     },
+    d:    { v1:[1,[0,1,2,3,2,-1]],   v2:[6,[6,7,8,9,8,-1]]    },
+    '7':  { v1:[1,[0,2,0,1,0,0]],    v2:[7,[7,7,9,7,9,7]]     },
+    '7M': { v1:[1,[0,2,1,1,0,0]],    v2:[7,[7,7,9,8,9,7]]     },
+    'm7': { v1:[1,[0,2,0,0,0,0]],    v2:[7,[7,7,9,7,8,7]]     },
+    '9':  { v1:[1,[0,2,0,1,0,2]],    v2:[7,[7,7,7,7,9,7]]     },
+    'sus2':{ v1:[1,[0,2,2,4,0,0]],   v2:[7,[7,7,9,9,7,7]]     },
+    'sus4':{ v1:[1,[0,2,2,2,0,0]],   v2:[7,[7,7,9,9,10,7]]    },
+    '/G#':{ v1:[1,[4,2,2,1,0,0]],    v2:[1,[4,2,2,1,0,0]]     },
   },
   'F': {
-    M: { v1:[1,[1,1,2,3,3,1]],    v2:[8,[8,8,10,10,10,8]] },
-    m: { v1:[1,[1,1,3,3,2,1]],    v2:[8,[8,8,10,10,9,8]] },
-    d: { v1:[1,[1,2,3,4,3,1]],    v2:[7,[7,8,9,10,9,7]] },
+    M:    { v1:[1,[1,1,2,3,3,1]],    v2:[8,[8,8,10,10,10,8]]  },
+    m:    { v1:[1,[1,1,3,3,2,1]],    v2:[8,[8,8,10,10,9,8]]   },
+    d:    { v1:[1,[1,2,3,4,3,-1]],   v2:[7,[7,8,9,10,9,-1]]   },
+    '7':  { v1:[1,[1,1,2,1,1,1]],    v2:[8,[8,8,10,8,10,8]]   },
+    '7M': { v1:[1,[1,1,2,2,1,0]],    v2:[8,[8,8,10,9,10,8]]   },
+    'm7': { v1:[1,[1,1,3,1,2,1]],    v2:[8,[8,8,10,8,9,8]]    },
+    '9':  { v1:[1,[1,1,0,1,1,3]],    v2:[8,[8,8,8,8,10,8]]    },
+    'sus2':{ v1:[1,[1,1,3,3,1,1]],   v2:[8,[8,8,10,10,8,8]]   },
+    'sus4':{ v1:[1,[1,1,3,3,4,1]],   v2:[8,[8,8,10,10,11,8]]  },
+    '/A': { v1:[1,[-1,0,2,2,1,1]],   v2:[1,[-1,0,2,2,1,1]]    },
   },
   'F#': {
-    M: { v1:[2,[2,2,3,4,4,2]],    v2:[9,[9,9,11,11,11,9]] },
-    m: { v1:[2,[2,2,4,4,3,2]],    v2:[9,[9,9,11,11,10,9]] },
-    d: { v1:[2,[2,3,4,5,4,2]],    v2:[8,[8,9,10,11,10,8]] },
+    M:    { v1:[2,[2,2,3,4,4,2]],    v2:[9,[9,9,11,11,11,9]]  },
+    m:    { v1:[2,[2,2,4,4,3,2]],    v2:[9,[9,9,11,11,10,9]]  },
+    d:    { v1:[2,[2,3,4,5,4,-1]],   v2:[8,[8,9,10,11,10,-1]] },
+    '7':  { v1:[2,[2,2,3,2,2,2]],    v2:[9,[9,9,11,9,11,9]]   },
+    '7M': { v1:[2,[2,2,3,3,2,1]],    v2:[9,[9,9,11,10,11,9]]  },
+    'm7': { v1:[2,[2,2,4,2,3,2]],    v2:[9,[9,9,11,9,10,9]]   },
+    '9':  { v1:[2,[2,2,2,2,4,2]],    v2:[9,[9,9,9,9,11,9]]    },
+    'sus2':{ v1:[2,[2,2,4,4,2,2]],   v2:[9,[9,9,11,11,9,9]]   },
+    'sus4':{ v1:[2,[2,2,4,4,5,2]],   v2:[9,[9,9,11,11,12,9]]  },
   },
   'G': {
-    M: { v1:[1,[3,2,0,0,0,3]],    v2:[3,[3,3,5,5,5,3]] },
-    m: { v1:[1,[3,1,0,0,3,3]],    v2:[3,[3,3,5,5,4,3]] },
-    d: { v1:[2,[2,3,4,5,4,2]],    v2:[3,[3,4,5,6,5,3]] },
+    M:    { v1:[1,[3,2,0,0,0,3]],    v2:[3,[3,3,5,5,5,3]]     },
+    m:    { v1:[3,[3,3,5,5,4,3]],    v2:[3,[3,3,5,5,4,3]]     },
+    d:    { v1:[1,[-1,-1,5,6,5,3]],  v2:[3,[3,4,5,6,5,-1]]    },
+    '7':  { v1:[1,[3,2,0,0,0,1]],    v2:[3,[3,3,5,3,5,3]]     },
+    '7M': { v1:[1,[3,2,0,0,0,2]],    v2:[3,[3,3,5,4,5,3]]     },
+    'm7': { v1:[3,[3,3,5,3,4,3]],    v2:[3,[3,3,5,3,4,3]]     },
+    '9':  { v1:[1,[3,2,0,0,0,0]],    v2:[3,[3,3,3,3,5,3]]     },
+    'sus2':{ v1:[1,[3,0,0,0,0,3]],   v2:[3,[3,3,5,5,3,3]]     },
+    'sus4':{ v1:[1,[3,3,0,0,1,3]],   v2:[3,[3,3,5,5,6,3]]     },
+    '/B': { v1:[1,[-1,2,0,0,0,3]],   v2:[1,[-1,2,0,0,0,3]]    },
   },
   'G#': {
-    M: { v1:[4,[4,4,5,6,6,4]],    v2:[4,[4,4,6,6,6,4]] },
-    m: { v1:[4,[4,4,6,6,5,4]],    v2:[4,[4,4,6,6,5,4]] },
-    d: { v1:[4,[4,5,6,7,6,4]],    v2:[9,[-1,10,11,12,11,9]] },
+    M:    { v1:[4,[4,4,6,6,6,4]],    v2:[4,[4,4,6,6,6,4]]     },
+    m:    { v1:[4,[4,4,6,6,5,4]],    v2:[4,[4,4,6,6,5,4]]     },
+    d:    { v1:[4,[-1,4,5,6,5,-1]],  v2:[4,[-1,4,5,6,5,-1]]   },
+    '7':  { v1:[4,[4,4,6,4,6,4]],    v2:[4,[4,4,6,4,6,4]]     },
+    '7M': { v1:[4,[4,3,1,1,-1,-1]],  v2:[4,[4,4,6,5,6,4]]     },
+    'm7': { v1:[4,[4,4,6,4,5,4]],    v2:[4,[4,4,6,4,5,4]]     },
+    '9':  { v1:[4,[4,4,4,4,6,4]],    v2:[4,[4,4,4,4,6,4]]     },
+    'sus2':{ v1:[4,[4,4,6,6,4,4]],   v2:[4,[4,4,6,6,4,4]]     },
+    'sus4':{ v1:[4,[4,4,6,6,7,4]],   v2:[4,[4,4,6,6,7,4]]     },
   },
   'A': {
-    M: { v1:[1,[-1,0,2,2,2,0]],   v2:[5,[5,5,7,7,7,5]] },
-    m: { v1:[1,[-1,0,2,2,1,0]],   v2:[5,[5,5,7,7,6,5]] },
-    d: { v1:[1,[-1,0,1,2,1,0]],   v2:[5,[5,6,7,8,7,5]] },
+    M:    { v1:[1,[-1,0,2,2,2,0]],   v2:[5,[5,5,7,7,7,5]]     },
+    m:    { v1:[1,[-1,0,2,2,1,0]],   v2:[5,[5,5,7,7,6,5]]     },
+    d:    { v1:[1,[-1,0,1,2,1,-1]],  v2:[5,[-1,5,6,7,6,-1]]   },
+    '7':  { v1:[1,[-1,0,2,0,2,0]],   v2:[5,[5,5,7,5,7,5]]     },
+    '7M': { v1:[1,[-1,0,2,1,2,0]],   v2:[5,[5,5,7,6,7,5]]     },
+    'm7': { v1:[1,[-1,0,2,0,1,0]],   v2:[5,[5,5,7,5,6,5]]     },
+    '9':  { v1:[1,[-1,0,2,0,2,2]],   v2:[5,[5,5,5,5,7,5]]     },
+    'sus2':{ v1:[1,[-1,0,2,2,0,0]],  v2:[5,[5,5,7,7,5,5]]     },
+    'sus4':{ v1:[1,[-1,0,2,2,3,0]],  v2:[5,[5,5,7,7,8,5]]     },
+    '/C#':{ v1:[1,[-1,4,2,2,2,0]],   v2:[1,[-1,4,2,2,2,0]]    },
+    '/E': { v1:[1,[0,0,2,2,2,0]],    v2:[1,[0,0,2,2,2,0]]     },
   },
   'A#': {
-    M: { v1:[1,[-1,1,3,3,3,1]],   v2:[6,[6,6,8,8,8,6]] },
-    m: { v1:[1,[-1,1,3,3,2,1]],   v2:[6,[6,6,8,8,7,6]] },
-    d: { v1:[1,[-1,1,2,3,2,1]],   v2:[6,[6,7,8,9,8,6]] },
+    M:    { v1:[1,[-1,1,3,3,3,1]],   v2:[6,[6,6,8,8,8,6]]     },
+    m:    { v1:[1,[-1,1,3,3,2,1]],   v2:[6,[6,6,8,8,7,6]]     },
+    d:    { v1:[1,[-1,1,2,3,2,-1]],  v2:[6,[-1,6,7,8,7,-1]]   },
+    '7':  { v1:[1,[-1,1,3,1,3,1]],   v2:[6,[6,6,8,6,8,6]]     },
+    '7M': { v1:[1,[-1,1,3,2,3,1]],   v2:[6,[6,6,8,7,8,6]]     },
+    'm7': { v1:[1,[-1,1,3,1,2,1]],   v2:[6,[6,6,8,6,7,6]]     },
+    '9':  { v1:[6,[-1,6,6,6,8,6]],   v2:[6,[6,6,6,6,8,6]]     },
+    'sus2':{ v1:[1,[-1,1,3,3,1,1]],  v2:[6,[6,6,8,8,6,6]]     },
+    'sus4':{ v1:[1,[-1,1,3,3,4,1]],  v2:[6,[6,6,8,8,9,6]]     },
+    '/D': { v1:[1,[-1,-1,0,3,3,1]],  v2:[1,[-1,-1,0,3,3,1]]   },
   },
   'B': {
-    M: { v1:[2,[-1,2,4,4,4,2]],   v2:[7,[7,7,9,9,9,7]] },
-    m: { v1:[2,[-1,2,4,4,3,2]],   v2:[7,[7,7,9,9,8,7]] },
-    d: { v1:[2,[-1,2,3,4,3,2]],   v2:[7,[7,8,9,10,9,7]] },
+    M:    { v1:[2,[-1,2,4,4,4,2]],   v2:[7,[7,7,9,9,9,7]]     },
+    m:    { v1:[2,[-1,2,4,4,3,2]],   v2:[7,[7,7,9,9,8,7]]     },
+    d:    { v1:[1,[-1,2,3,4,3,-1]],  v2:[7,[-1,7,8,9,8,-1]]   },
+    '7':  { v1:[2,[-1,2,4,2,4,2]],   v2:[7,[7,7,9,7,9,7]]     },
+    '7M': { v1:[2,[-1,2,4,3,4,2]],   v2:[7,[7,7,9,8,9,7]]     },
+    'm7': { v1:[2,[-1,2,4,2,3,2]],   v2:[7,[7,7,9,7,8,7]]     },
+    '9':  { v1:[2,[-1,2,2,2,4,2]],   v2:[7,[7,7,7,7,9,7]]     },
+    'sus2':{ v1:[2,[-1,2,4,4,2,2]],  v2:[7,[7,7,9,9,7,7]]     },
+    'sus4':{ v1:[2,[-1,2,4,4,5,2]],  v2:[7,[7,7,9,9,10,7]]    },
+    '/D#':{ v1:[1,[-1,6,4,4,4,2]],   v2:[1,[-1,6,4,4,4,2]]    },
+    '/F#':{ v1:[2,[2,2,4,4,4,2]],    v2:[2,[2,2,4,4,4,2]]     },
   },
 };
 
@@ -1632,8 +1732,11 @@ const CHORD_SHAPES = {
 let _chordVoicing = 0;
 
 // ── Desenha diagrama SVG de violão — versão 100% corrigida ───────────────────
+// quality pode ser: chave interna ('M','m','d','7','7M','m7','9','sus2','sus4','/X')
+//                   OU nome antigo ('Maior','Menor','Dim') — compatibilidade
 function drawChordDiagram(svgEl, rootName, quality, voicingIdx) {
-  const qKey = quality === 'Maior' ? 'M' : quality === 'Menor' ? 'm' : 'd';
+  const COMPAT = { 'Maior':'M', 'Menor':'m', 'Dim':'d' };
+  const qKey = COMPAT[quality] || quality;
   const shapeSet = CHORD_SHAPES[rootName]?.[qKey];
 
   svgEl.innerHTML = '';
@@ -1788,6 +1891,20 @@ function getChordNotes(rootIdx, quality) {
 
 
 
+// Mapa de tipos para label exibido
+const VARIANT_LABELS = {
+  'M':'Maior', 'm':'Menor', 'd':'Dim°',
+  '7':'Dom7', '7M':'Maj7', 'm7':'m7',
+  '9':'Dom9', 'sus2':'Sus2', 'sus4':'Sus4',
+};
+// Tipos de acorde na ordem de exibição (as slash chords aparecem se existirem)
+const VARIANT_ORDER = ['M','m','d','7','7M','m7','9','sus2','sus4'];
+
+// Mapa qualidade→tipo interno (dos graus do campo harmônico)
+const QUALITY_TO_TYPE = { 'Maior':'M', 'Menor':'m', 'Dim':'d' };
+
+let _ctCurrentRoot = '', _ctCurrentVariant = 'M', _ctCurrentDegreeIdx = 0, _ctCurrentScaleType = '';
+
 window.showChordTip = (chordName, degree, func, quality, degreeIdx, scaleType) => {
   if (window._vp && !window._vp.isPro) { showPaywall(); return; }
 
@@ -1795,38 +1912,20 @@ window.showChordTip = (chordName, degree, func, quality, degreeIdx, scaleType) =
   document.getElementById('ctChordName').textContent = chordName;
   document.getElementById('ctChordSub').textContent  = `${degree} grau · ${func} · ${quality} · ${scaleType}`;
 
-  // Reset para aba acorde
   switchCtTab('acorde');
 
-  // ── Painel Acorde: diagrama + notas ──
   const rootName = chordName.replace('m','').replace('°','');
-  const rootIdx  = NOTE_NAMES.indexOf(rootName);
-  const svgEl    = document.getElementById('ctDiagramSvg');
+  _ctCurrentRoot       = rootName;
+  _ctCurrentVariant    = QUALITY_TO_TYPE[quality] || 'M';
+  _ctCurrentDegreeIdx  = degreeIdx;
+  _ctCurrentScaleType  = scaleType;
+  _chordVoicing        = 0;
 
-  // Reset voicing ao abrir
-  _chordVoicing = 0;
-  _ctCurrentRoot    = rootName;
-  _ctCurrentQuality = quality;
-
-  // Atualiza botões de voicing
+  _renderVariantRow(rootName);
   _updateVoicingBtns();
-  drawChordDiagram(svgEl, rootName, quality, _chordVoicing);
+  _renderChordPanel(rootName, _ctCurrentVariant);
 
-  const notesEl = document.getElementById('ctChordNotes');
-  notesEl.innerHTML = '';
-  if (rootIdx >= 0) {
-    getChordNotes(rootIdx, quality).forEach(n => {
-      const chip = document.createElement('div');
-      chip.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:2px;';
-      chip.innerHTML = `<span class="chord-note-chip">${n.pt}</span><span class="chord-note-interval">${n.interval}</span>`;
-      notesEl.appendChild(chip);
-    });
-  }
-
-  const formulas = { 'Maior':'Fundamental + 3ª Maior + 5ª Justa', 'Menor':'Fundamental + 3ª Menor + 5ª Justa', 'Dim':'Fundamental + 3ª Menor + 5ª Diminuta' };
-  document.getElementById('ctChordFormula').innerHTML = `<strong>Fórmula:</strong> ${formulas[quality] || ''}`;
-
-  // ── Painel Dicas ──
+  // Painel Dicas
   const tipsEl = document.getElementById('ctTips');
   tipsEl.innerHTML = '';
   const tipData = CHORD_TIPS[degreeIdx] || { tips: [] };
@@ -1840,7 +1939,67 @@ window.showChordTip = (chordName, degree, func, quality, degreeIdx, scaleType) =
   modal.classList.add('open');
 };
 
-let _ctCurrentRoot = '', _ctCurrentQuality = '';
+function _renderVariantRow(rootName) {
+  const row = document.getElementById('ctVariantRow');
+  row.innerHTML = '';
+  const shapeSet = CHORD_SHAPES[rootName] || {};
+  const available = [...VARIANT_ORDER, ...Object.keys(shapeSet).filter(k => k.startsWith('/'))].filter(k => shapeSet[k]);
+  available.forEach(key => {
+    const btn = document.createElement('button');
+    btn.className = 'variant-chip' + (key === _ctCurrentVariant ? ' active' : '');
+    btn.textContent = VARIANT_LABELS[key] || key;
+    btn.onclick = () => {
+      _ctCurrentVariant = key;
+      _chordVoicing = 0;
+      row.querySelectorAll('.variant-chip').forEach((b,i) => {
+        b.className = 'variant-chip' + (available[i] === key ? ' active' : '');
+      });
+      _updateVoicingBtns();
+      _renderChordPanel(rootName, key);
+    };
+    row.appendChild(btn);
+  });
+}
+
+// Notas e fórmulas para cada variante
+const VARIANT_INTERVALS = {
+  'M':   { iv:[0,4,7],       labels:['Fund.','3ªM','5ªJ'],    formula:'Fund. + 3ª Maior + 5ª Justa' },
+  'm':   { iv:[0,3,7],       labels:['Fund.','3ªm','5ªJ'],    formula:'Fund. + 3ª Menor + 5ª Justa' },
+  'd':   { iv:[0,3,6],       labels:['Fund.','3ªm','5ªd'],    formula:'Fund. + 3ª Menor + 5ª Diminuta' },
+  '7':   { iv:[0,4,7,10],    labels:['Fund.','3ªM','5ªJ','7ªm'], formula:'Fund. + 3ªM + 5ªJ + 7ª Menor' },
+  '7M':  { iv:[0,4,7,11],    labels:['Fund.','3ªM','5ªJ','7ªM'], formula:'Fund. + 3ªM + 5ªJ + 7ª Maior' },
+  'm7':  { iv:[0,3,7,10],    labels:['Fund.','3ªm','5ªJ','7ªm'], formula:'Fund. + 3ªm + 5ªJ + 7ª Menor' },
+  '9':   { iv:[0,4,7,10,2],  labels:['Fund.','3ªM','5ªJ','7ªm','9ª'], formula:'Fund. + 3ªM + 5ªJ + 7ªm + 9ª' },
+  'sus2':{ iv:[0,2,7],       labels:['Fund.','2ªM','5ªJ'],    formula:'Fund. + 2ª Maior + 5ª Justa' },
+  'sus4':{ iv:[0,5,7],       labels:['Fund.','4ªJ','5ªJ'],    formula:'Fund. + 4ª Justa + 5ª Justa' },
+};
+
+function _renderChordPanel(rootName, variantKey) {
+  const svgEl = document.getElementById('ctDiagramSvg');
+  drawChordDiagram(svgEl, rootName, variantKey, _chordVoicing);
+
+  const rootIdx = NOTE_NAMES.indexOf(rootName);
+  const notesEl = document.getElementById('ctChordNotes');
+  notesEl.innerHTML = '';
+
+  const vi = VARIANT_INTERVALS[variantKey];
+  if (vi && rootIdx >= 0) {
+    vi.iv.forEach((interval, i) => {
+      const ni = (rootIdx + interval + 12) % 12;
+      const chip = document.createElement('div');
+      chip.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:2px;';
+      chip.innerHTML = `<span class="chord-note-chip">${NOTE_NAMES_PT[ni]}</span><span class="chord-note-interval">${vi.labels[i]}</span>`;
+      notesEl.appendChild(chip);
+    });
+    document.getElementById('ctChordFormula').innerHTML = `<strong>Fórmula:</strong> ${vi.formula}`;
+  } else {
+    // Slash chord ou sem mapeamento — mostra só o diagrama
+    const baseParts = variantKey.split('/');
+    document.getElementById('ctChordFormula').innerHTML = baseParts[1]
+      ? `<strong>Baixo:</strong> ${baseParts[1]} · Acorde com nota de baixo alternativa`
+      : '';
+  }
+}
 
 function _updateVoicingBtns() {
   document.querySelectorAll('.voicing-btn').forEach((b, i) => {
@@ -1851,7 +2010,7 @@ function _updateVoicingBtns() {
 window.selectVoicing = (idx) => {
   _chordVoicing = idx;
   _updateVoicingBtns();
-  drawChordDiagram(document.getElementById('ctDiagramSvg'), _ctCurrentRoot, _ctCurrentQuality, idx);
+  drawChordDiagram(document.getElementById('ctDiagramSvg'), _ctCurrentRoot, _ctCurrentVariant, idx);
 };
 
 window.closeChordTip = () => document.getElementById('chordTipModal').classList.remove('open');

@@ -23,20 +23,24 @@ module.exports = async function handler(req, res) {
 
   try {
     const payment = new Payment(mpClient);
-    const result = await payment.get({ id: payment_id });
+    const result  = await payment.get({ id: payment_id });
 
     if (result.status === 'approved' && result.external_reference === uid) {
-      await admin.firestore()
-        .collection('users')
-        .doc(uid)
-        .update({ plan: 'pro', purchasedAt: new Date(), paymentId: payment_id });
-
-      return res.json({ approved: true });
+      // Se for um UID real do Firebase (não guest_), atualiza o plano
+      if (!uid.startsWith('guest_')) {
+        const ref = admin.firestore().collection('users').doc(uid);
+        const snap = await ref.get();
+        if (snap.exists) {
+          await ref.update({ plan: 'pro', purchasedAt: new Date(), paymentId: payment_id });
+        }
+      }
+      // Pagamento aprovado — frontend vai abrir modal de cadastro
+      return res.json({ approved: true, payment_id });
     }
 
     res.json({ approved: false, status: result.status });
   } catch (err) {
     console.error('Erro check payment:', err);
-    res.status(500).json({ error: 'Falha ao verificar pagamento', detail: err.message, stack: err.stack });
+    res.status(500).json({ error: 'Falha ao verificar pagamento', detail: err.message });
   }
 }
